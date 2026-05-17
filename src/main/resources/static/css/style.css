@@ -1,0 +1,528 @@
+/* ========== 重置和基础设置 ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    color: #409EFF;
+    text-decoration: none;
+}
+a:hover {
+    color: #66b1ff;
+}
+
+/* ========== 导航栏 ========== */
+.navbar {
+    background: #409EFF;
+    color: white;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 56px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.navbar .logo {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.navbar .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .nav-links a {
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.navbar .nav-links a:hover {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.navbar .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navbar .btn-logout {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.navbar .btn-logout:hover {
+    background: rgba(255,255,255,0.35);
+}
+
+/* ========== 容器 ========== */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========== 卡片 ========== */
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+/* ========== 按钮 ========== */
+.btn {
+    display: inline-block;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    transition: background 0.2s;
+}
+.btn-primary {
+    background: #409EFF;
+    color: white;
+}
+.btn-primary:hover {
+    background: #66b1ff;
+}
+.btn-danger {
+    background: #F56C6C;
+    color: white;
+}
+.btn-danger:hover {
+    background: #f78989;
+}
+.btn-success {
+    background: #67C23A;
+    color: white;
+}
+.btn-success:hover {
+    background: #85ce61;
+}
+.btn-default {
+    background: #eee;
+    color: #333;
+}
+.btn-default:hover {
+    background: #ddd;
+}
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+/* ========== 表单 ========== */
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #555;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #409EFF;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(64,158,255,0.2);
+}
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ========== 搜索栏 ========== */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.search-bar input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    font-size: 14px;
+}
+.search-bar input:focus {
+    border-color: #409EFF;
+    outline: none;
+}
+
+/* ========== 音乐列表 ========== */
+.music-list {
+    list-style: none;
+}
+.music-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.music-item:last-child {
+    border-bottom: none;
+}
+.music-item .music-info h3 {
+    margin-bottom: 4px;
+}
+.music-item .music-info p {
+    color: #999;
+    font-size: 13px;
+}
+.music-item .music-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: #999;
+}
+
+/* ========== 播放器 ========== */
+.player-section {
+    margin-bottom: 20px;
+}
+.player-section audio {
+    width: 100%;
+    margin-top: 12px;
+}
+
+/* ========== 评论区域 ========== */
+.comment-form {
+    margin-bottom: 24px;
+}
+.comment-list {
+    list-style: none;
+}
+.comment-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.comment-item .comment-user {
+    font-weight: bold;
+    margin-right: 8px;
+    color: #409EFF;
+}
+.comment-item .comment-time {
+    color: #999;
+    font-size: 12px;
+}
+.comment-item .comment-content {
+    margin-top: 4px;
+    color: #555;
+}
+
+/* ========== 排行榜 Tab ========== */
+.tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+.tab-btn {
+    padding: 10px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+}
+.tab-btn.active {
+    color: #409EFF;
+    border-bottom-color: #409EFF;
+}
+.tab-btn:hover {
+    color: #409EFF;
+}
+
+.rank-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.rank-item .rank-num {
+    width: 40px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #409EFF;
+}
+.rank-item.top3 .rank-num {
+    color: #E6A23C;
+}
+
+/* ========== 分页 ========== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+.pagination button {
+    padding: 6px 14px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s;
+}
+.pagination button:hover {
+    color: #409EFF;
+    border-color: #409EFF;
+}
+.pagination button.active {
+    background: #409EFF;
+    color: white;
+    border-color: #409EFF;
+}
+.pagination button:disabled {
+    cursor: not-allowed;
+    color: #ccc;
+}
+
+/* ========== 登录/注册页面 - 深色清冽主题 ========== */
+
+/* 深色渐变背景 */
+body.auth-page {
+    background: linear-gradient(135deg, #0b0b14 0%, #14141f 40%, #1a1a2e 100%);
+    min-height: 100vh;
+}
+
+.auth-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 60px 20px 40px;
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin-bottom: 36px;
+    color: #e8e8f0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.auth-container .card {
+    background: rgba(26, 26, 46, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    padding: 40px 36px;
+    margin-bottom: 20px;
+}
+
+.auth-container .form-group {
+    margin-bottom: 22px;
+}
+
+.auth-container .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #8888a8;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.auth-container .form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #e0e0ec;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.auth-container .form-group input:focus {
+    border-color: #7c6cf0;
+    box-shadow: 0 0 0 3px rgba(124, 108, 240, 0.12);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.auth-container .form-group input::placeholder {
+    color: #4a4a66;
+    font-size: 13px;
+}
+
+/* 自动填充覆盖 */
+.auth-container .form-group input:-webkit-autofill,
+.auth-container .form-group input:-webkit-autofill:hover,
+.auth-container .form-group input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #e0e0ec;
+    -webkit-box-shadow: 0 0 0px 1000px rgba(26, 26, 46, 0.95) inset;
+    transition: background-color 5000s ease-in-out 0s;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.auth-container .form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.auth-container .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #7c6cf0, #6a5cd6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+.auth-container .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(124, 108, 240, 0.35);
+}
+
+.auth-container .btn-primary:active {
+    transform: translateY(0);
+}
+
+.auth-container .form-actions a {
+    text-align: center;
+    color: #7c6cf0;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s;
+    padding: 4px 0;
+}
+
+.auth-container .form-actions a:hover {
+    color: #9a8cf5;
+}
+
+/* 复选框 */
+.auth-container .checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal !important;
+    font-size: 13px;
+    color: #666682 !important;
+    cursor: pointer;
+    user-select: none;
+}
+
+.auth-container .checkbox-label input[type="checkbox"] {
+    width: auto !important;
+    cursor: pointer;
+    accent-color: #7c6cf0;
+}
+
+/* ========== 上传页面 ========== */
+.upload-container {
+    max-width: 600px;
+    margin: 40px auto;
+}
+.file-input-wrapper {
+    margin-bottom: 12px;
+}
+
+/* ========== 表格 ========== */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.table th, .table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+.table th {
+    background: #fafafa;
+    font-weight: 600;
+    color: #555;
+}
+.table tr:hover {
+    background: #f9f9f9;
+}
+
+/* ========== 提示信息 ========== */
+.tip {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
+    font-size: 14px;
+}
+
+/* ========== 消息提示 ========== */
+.toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    z-index: 9999;
+    animation: slideDown 0.3s ease;
+}
+.toast.success { background: #67C23A; }
+.toast.error { background: #F56C6C; }
+.toast.info { background: #909399; }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+

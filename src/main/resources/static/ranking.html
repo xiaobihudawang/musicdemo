@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排行榜</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h2 style="margin-bottom: 20px;">本周排行榜</h2>
+
+    <!-- 排行榜 Tab 切换 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('likes', this)">👍 点赞排行</button>
+        <button class="tab-btn" onclick="switchTab('downloads', this)">⬇️ 下载排行</button>
+        <button class="tab-btn" onclick="switchTab('comments', this)">💬 评论排行</button>
+    </div>
+
+    <div class="card">
+        <div id="rankList">
+            <div class="tip">加载中...</div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentType = 'likes';
+
+        // 切换 Tab，重新加载排行
+        function switchTab(type, btn) {
+            currentType = type;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadRanking();
+        }
+
+        // ========== 加载排行数据 ==========
+        async function loadRanking() {
+            const res = await get('/api/ranking/' + currentType);
+            if (res.code !== 200) return;
+
+            const list = res.data;
+            if (!list || list.length === 0) {
+                document.getElementById('rankList').innerHTML =
+                    '<div class="tip">本周暂无排行数据</div>';
+                return;
+            }
+
+            document.getElementById('rankList').innerHTML = list.map((item, index) => {
+                const rankClass = index < 3 ? 'top3' : '';
+                return `
+                    <div class="rank-item ${rankClass}">
+                        <div class="rank-num">${index + 1}</div>
+                        <div style="flex:1;">
+                            <div><a href="/detail.html?id=${item.id}"><strong>${escapeHtml(item.title)}</strong></a></div>
+                            <div style="color:#999;font-size:13px;">
+                                ${escapeHtml(item.artist)} |
+                                ❤️ ${item.likeCount} |
+                                💬 ${item.commentCount} |
+                                ⬇️ ${item.downloadCount}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadRanking();
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h2 style="margin-bottom: 20px;">用户管理</h2>
+    <!-- 用户管理表格 -->
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>昵称</th>
+                    <th>邮箱</th>
+                    <th>角色</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                <tr><td colspan="8" style="text-align:center;">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // 权限校验：非管理员不可访问
+        if (getUserRole() !== 'admin') {
+            showToast('无权访问', 'error');
+            setTimeout(() => { window.location.href = '/'; }, 1000);
+        }
+
+        // ========== 加载用户列表 ==========
+        async function loadUsers() {
+            const res = await get('/api/admin/users');
+            if (res.code !== 200) return;
+
+            const users = res.data;
+            document.getElementById('userTable').innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${escapeHtml(u.username)}</td>
+                    <td>${escapeHtml(u.name || '-')}</td>
+                    <td>${escapeHtml(u.email || '-')}</td>
+                    <td>${u.role === 'admin' ? '<span style="color:#E6A23C;">管理员</span>' : '普通用户'}</td>
+                    <td>${u.enabled ? '<span style="color:#67C23A;">启用</span>' : '<span style="color:#F56C6C;">禁用</span>'}</td>
+                    <td>${formatDate(u.createTime)}</td>
+                    <td>
+                        <button class="btn btn-sm ${u.enabled ? 'btn-danger' : 'btn-success'}"
+                                onclick="toggleStatus(${u.id}, ${!u.enabled})">
+                            ${u.enabled ? '禁用' : '启用'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ========== 切换用户启用/禁用状态 ==========
+        async function toggleStatus(id, enabled) {
+            const action = enabled ? '启用' : '禁用';
+            if (!confirm(`确定${action}该用户吗？`)) return;
+
+            const res = await put('/api/admin/users/' + id + '/status', { enabled });
+            if (res.code === 200) {
+                showToast('操作成功', 'success');
+                loadUsers();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

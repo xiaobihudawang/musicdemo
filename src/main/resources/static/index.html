@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐分享平台</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<h2 style="margin-bottom: 20px;">音乐列表</h2>
+
+<!-- 搜索栏 -->
+<div class="search-bar">
+    <input type="text" id="keyword" placeholder="搜索歌曲标题或歌手...">
+    <button class="btn btn-primary" onclick="search()">搜索</button>
+</div>
+
+<!-- 音乐列表区域 -->
+<div class="card">
+    <ul class="music-list" id="musicList">
+        <div class="tip">加载中...</div>
+    </ul>
+</div>
+
+<!-- 分页区域 -->
+<div class="pagination" id="pagination"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+    // ========== 状态变量 ==========
+    let currentPage = 1;
+    const pageSize = 10;
+
+    /** 加载音乐列表 */
+    async function loadList(page, keyword) {
+        let url = `/api/music/list?page=${page}&size=${pageSize}`;
+        if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+
+        const res = await get(url);
+        if (res.code !== 200) return;
+
+        const data = res.data;
+        renderList(data.list);
+        renderPagination(data.total, page);
+    }
+
+    /** 渲染音乐列表 */
+    function renderList(list) {
+        const container = document.getElementById('musicList');
+        if (!list || list.length === 0) {
+            container.innerHTML = '<div class="tip">暂无音乐，快去上传一首吧！</div>';
+            return;
+        }
+
+        container.innerHTML = list.map(item => `
+                <li class="music-item">
+                    <div class="music-info">
+                        <h3><a href="/detail.html?id=${item.id}">${escapeHtml(item.title)}</a></h3>
+                        <p>${escapeHtml(item.artist)} | 上传者：${escapeHtml(item.username)} | ${formatDate(item.createTime)}</p>
+                    </div>
+                    <div class="music-actions">
+                        <span>❤️ ${item.likeCount || 0}</span>
+                        <span>💬 ${item.commentCount || 0}</span>
+                        <span>⬇️ ${item.downloadCount || 0}</span>
+                    </div>
+                </li>
+            `).join('');
+    }
+
+    /** 渲染分页 */
+    function renderPagination(total, page) {
+        const totalPages = Math.ceil(total / pageSize);
+        const container = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button ${page <= 1 ? 'disabled' : ''} onclick="goPage(${page - 1})">上一页</button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+        }
+
+        html += `<button ${page >= totalPages ? 'disabled' : ''} onclick="goPage(${page + 1})">下一页</button>`;
+        container.innerHTML = html;
+    }
+
+    /** 跳转到指定页码 */
+    function goPage(page) {
+        currentPage = page;
+        const keyword = document.getElementById('keyword').value.trim();
+        loadList(page, keyword);
+    }
+
+    /** 按关键字搜索音乐 */
+    function search() {
+        currentPage = 1;
+        const keyword = document.getElementById('keyword').value.trim();
+        loadList(1, keyword);
+    }
+
+    /** HTML 转义（防止 XSS） */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * ========== Token 校验 ==========
+     * 首页加载时检查 Token 有效性，无效则跳转登录页
+     */
+
+    /** 首页 Token 校验 */
+    async function handleAutoLogin() {
+        const token = getToken();
+
+        if (!token || isTokenExpired(token)) {
+            clearToken();
+            window.location.href = '/login.html?expired=1';
+            return;
+        }
+
+        // 服务端验签
+        const res = await get('/api/auth/verify');
+        if (res.code !== 200) {
+            clearToken();
+            window.location.href = '/login.html?expired=1';
+        }
+    }
+
+    // 搜索框回车搜索
+    document.getElementById('keyword').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') search();
+    });
+
+    // ========== 页面初始化 ==========
+    (async function() {
+        await handleAutoLogin();
+        loadList(1, '');
+    })();
+</script>
+</body>
+</html>

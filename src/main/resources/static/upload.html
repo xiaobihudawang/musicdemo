@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传音乐</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="upload-container">
+        <h2 style="margin-bottom: 20px;">上传音乐</h2>
+        <!-- 上传表单 -->
+        <div class="card">
+            <!-- 歌曲标题 -->
+            <div class="form-group">
+                <label>歌曲标题 *</label>
+                <input type="text" id="title" placeholder="请输入歌曲标题">
+            </div>
+            <!-- 歌手 -->
+            <div class="form-group">
+                <label>歌手 *</label>
+                <input type="text" id="artist" placeholder="请输入歌手名">
+            </div>
+            <!-- 简介（选填） -->
+            <div class="form-group">
+                <label>简介</label>
+                <textarea id="description" placeholder="这首歌的介绍（可选）" rows="3"></textarea>
+            </div>
+            <!-- 文件上传 -->
+            <div class="form-group file-input-wrapper">
+                <label>音乐文件 *（支持 MP3/FLAC/WAV/AAC/OGG/M4A/MP4，最大 50MB）</label>
+                <input type="file" id="file" accept=".mp3,.flac,.wav,.aac,.ogg,.m4a,.mp4" style="border: none; padding-left: 0;">
+                <p id="fileInfo" style="color: #999; font-size: 12px; margin-top: 4px;"></p>
+            </div>
+            <button class="btn btn-primary" onclick="doUpload()">上传</button>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        if (!isLogined()) {
+            showToast('请先登录', 'error');
+            setTimeout(() => { window.location.href = '/login.html'; }, 1000);
+        }
+
+        // 文件选择后显示文件名和大小
+        document.getElementById('file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileInfo').textContent =
+                    `已选择：${file.name} (${formatSize(file.size)})`;
+            }
+        });
+
+        // ========== 上传逻辑 ==========
+        async function doUpload() {
+            // 收集表单数据
+            const title = document.getElementById('title').value.trim();
+            const artist = document.getElementById('artist').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+
+            // 校验必填字段
+            if (!title || !artist) {
+                showToast('请填写标题和歌手', 'error');
+                return;
+            }
+            // 校验文件
+            if (!file) {
+                showToast('请选择音乐文件', 'error');
+                return;
+            }
+            // 校验格式
+            const allowedExts = ['.mp3', '.flac', '.wav', '.aac', '.ogg', '.m4a', '.mp4'];
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            if (!allowedExts.includes(ext)) {
+                showToast('仅支持 MP3/FLAC/WAV/AAC/OGG/M4A/MP4 格式', 'error');
+                return;
+            }
+            // 校验大小
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('文件大小不能超过 50MB', 'error');
+                return;
+            }
+
+            // 构建 FormData
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', title);
+            formData.append('artist', artist);
+            formData.append('description', description || '');
+
+            // 发起上传请求（手动使用 fetch 以支持 FormData）
+            const token = getToken();
+            try {
+                const response = await fetch('/api/music/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData
+                });
+                const res = await response.json();
+
+                // 处理上传结果
+                if (res.code === 200) {
+                    showToast('上传成功', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/detail.html?id=' + res.data.id;
+                    }, 800);
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (error) {
+                showToast('上传失败，请稍后重试', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

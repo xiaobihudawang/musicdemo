@@ -1,0 +1,43 @@
+# 服务端口：8443（默认是 8080）
+server:
+  port: 8443
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/music_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 963369Lbc
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # SQL 初始化：设为 never 不使用 schema.sql 自动建表
+  sql:
+    init:
+      mode: never
+
+  # 文件上传大小限制：50MB
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# MyBatis 配置
+mybatis:
+  # XML 映射文件路径
+  mapper-locations: classpath:mapper/*.xml
+  # 类型别名包：简化 XML 中类的全限定名
+  type-aliases-package: org.example.musicdemo.entity
+  configuration:
+    # 下划线转驼峰：create_time → createTime
+    map-underscore-to-camel-case: true
+
+# JWT 配置
+jwt:
+  # JWT 密钥（不要泄露给任何人）
+  secret: MusicPlatformSecretKeyForJWT2024VeryLongAndSecure
+  # Token 过期时间（毫秒）
+  expiration: 259200000
+
+# 音乐文件存储路径
+music:
+  file-path: D:/workspace/music/
+

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- CommentMapper：评论数据访问接口，提供评论的查询、新增和删除功能 -->
+<mapper namespace="org.example.musicdemo.mapper.CommentMapper">
+
+    <!-- 评论结果映射：关联用户表查询时使用 -->
+    <resultMap id="commentMap" type="org.example.musicdemo.entity.Comment">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+        <result property="userId" column="user_id"/>
+        <result property="musicId" column="music_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="username" column="username"/>
+    </resultMap>
+
+    <!-- 根据歌曲 ID 查询评论列表（按时间倒序） -->
+    <select id="findByMusicId" resultMap="commentMap">
+        SELECT c.*, u.username
+        FROM comment c
+        LEFT JOIN `user` u ON c.user_id = u.id
+        WHERE c.music_id = #{musicId}
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 根据评论 ID 查询单条评论 -->
+    <select id="findById" resultMap="commentMap">
+        SELECT c.*, u.username FROM comment c
+        LEFT JOIN `user` u ON c.user_id = u.id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 新增评论（自动回填自增 ID） -->
+    <insert id="insert" parameterType="org.example.musicdemo.entity.Comment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comment (content, user_id, music_id) VALUES (#{content}, #{userId}, #{musicId})
+    </insert>
+
+    <!-- 根据 ID 删除评论 -->
+    <delete id="deleteById">
+        DELETE FROM comment WHERE id = #{id}
+    </delete>
+</mapper>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐详情</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="detailContent">
+        <div class="tip">加载中...</div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const musicId = urlParams.get('id');
+
+        let musicData = null;
+        let liked = false;
+
+        // ========== 加载音乐详情 ==========
+        async function loadDetail() {
+            if (!musicId) {
+                document.getElementById('detailContent').innerHTML = '<div class="tip">未找到音乐</div>';
+                return;
+            }
+
+            const res = await get('/api/music/' + musicId);
+            if (res.code !== 200) {
+                document.getElementById('detailContent').innerHTML = '<div class="tip">音乐不存在</div>';
+                return;
+            }
+
+            musicData = res.data.music;
+            const comments = res.data.comments || [];
+            renderDetail(musicData, comments);
+
+            if (isLogined()) {
+                checkLikeStatus();
+            }
+        }
+
+        // ========== 点赞状态 ==========
+        async function checkLikeStatus() {
+            const res = await get('/api/music/' + musicId + '/like/status');
+            if (res.code === 200) {
+                liked = res.data.liked;
+                updateLikeButton();
+            }
+        }
+
+        function updateLikeButton() {
+            const btn = document.getElementById('likeBtn');
+            if (!btn) return;
+            btn.textContent = liked ? '❤️ 已赞' : '🤍 点赞';
+            btn.className = liked ? 'btn btn-danger btn-sm' : 'btn btn-default btn-sm';
+        }
+
+        // ========== 渲染详情页面 ==========
+        function renderDetail(music, comments) {
+            const container = document.getElementById('detailContent');
+
+            let html = `
+                <div class="card player-section">
+                    <h2>${escapeHtml(music.title)}</h2>
+                    <p style="color: #999; margin-bottom: 12px;">
+                        歌手：${escapeHtml(music.artist)} |
+                        上传者：${escapeHtml(music.username)} |
+                        上传时间：${formatDate(music.createTime)}
+                    </p>
+                    <p style="color: #666; margin-bottom: 12px;">${escapeHtml(music.description || '暂无简介')}</p>
+                    <audio controls>
+                        <source src="/api/music/file/${music.filePath}">
+                        您的浏览器不支持音频播放
+                    </audio>
+                    <div style="margin-top: 16px; display: flex; gap: 10px; align-items: center;">
+                        <button id="likeBtn" class="btn btn-default btn-sm" onclick="toggleLike()">
+                            🤍 点赞
+                        </button>
+                        <span style="color: #999;">❤️ ${music.likeCount || 0}  |  💬 ${music.commentCount || 0}  |  ⬇️ ${music.downloadCount || 0}</span>
+                        <button class="btn btn-primary btn-sm" onclick="downloadMusic(${music.id})">⬇ 下载 (${formatSize(music.fileSize)})</button>
+            `;
+
+            if (isLogined()) {
+                if (getUserRole() === 'admin') {
+                    html += `<button class="btn btn-danger btn-sm" onclick="deleteMusic()">删除</button>`;
+                }
+            }
+
+            html += `</div></div>`;
+
+            html += `
+                <div class="card">
+                    <div class="card-header">评论 (${comments.length})</div>
+            `;
+
+            if (isLogined()) {
+                html += `
+                    <div class="comment-form">
+                        <div class="form-group">
+                            <textarea id="commentContent" placeholder="写下你的评论..." rows="3"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="submitComment()">发表评论</button>
+                    </div>
+                `;
+            }
+
+            if (comments.length === 0) {
+                html += '<div class="tip">暂无评论，快来抢沙发吧！</div>';
+            } else {
+                html += '<ul class="comment-list">';
+                comments.forEach(c => {
+                    html += `
+                        <li class="comment-item">
+                            <div>
+                                <span class="comment-user">${escapeHtml(c.username)}</span>
+                                <span class="comment-time">${formatDate(c.createTime)}</span>
+                            </div>
+                            <div class="comment-content">${escapeHtml(c.content)}</div>
+                            ${(getUserRole() === 'admin') ? `<button class="btn btn-danger btn-sm" style="margin-top:4px;" onclick="deleteComment(${c.id})">删除</button>` : ''}
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ========== 点赞/取消点赞 ==========
+        async function toggleLike() {
+            if (!isLogined()) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            const res = await post('/api/music/' + musicId + '/like');
+            if (res.code === 200) {
+                liked = res.data.liked;
+                updateLikeButton();
+                showToast(liked ? '点赞成功' : '已取消点赞', 'success');
+                loadDetail();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        // ========== 提交评论 ==========
+        async function submitComment() {
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) {
+                showToast('请输入评论内容', 'error');
+                return;
+            }
+            const res = await post('/api/music/' + musicId + '/comments', { content });
+            if (res.code === 200) {
+                showToast('评论成功', 'success');
+                loadDetail();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        // ========== 删除评论 ==========
+        async function deleteComment(commentId) {
+            if (!confirm('确定删除这条评论吗？')) return;
+            const res = await del('/api/comments/' + commentId);
+            if (res.code === 200) {
+                showToast('删除成功', 'success');
+                loadDetail();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        // ========== 删除音乐 ==========
+        async function deleteMusic() {
+            if (!confirm('确定删除这首音乐吗？删除后不可恢复！')) return;
+            const res = await del('/api/music/' + musicId);
+            if (res.code === 200) {
+                showToast('删除成功', 'success');
+                setTimeout(() => { window.location.href = '/'; }, 1000);
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        // ========== 下载 ==========
+        async function downloadMusic(id) {
+            if (!isLogined()) {
+                showToast('请先登录后再下载', 'error');
+                return;
+            }
+            const token = getToken();
+            const response = await fetch('/api/music/' + id + '/download', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!response.ok) {
+                showToast('下载失败', 'error');
+                return;
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = musicData.title + '.' + musicData.filePath.split('.').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadDetail();
+    </script>
+</body>
+</html>

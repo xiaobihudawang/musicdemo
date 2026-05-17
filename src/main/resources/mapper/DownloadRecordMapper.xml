@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- DownloadRecordMapper：下载记录数据访问接口，提供下载记录的持久化功能 -->
+<mapper namespace="org.example.musicdemo.mapper.DownloadRecordMapper">
+
+    <!-- 新增下载记录 -->
+    <insert id="insert" parameterType="org.example.musicdemo.entity.DownloadRecord">
+        INSERT INTO download_record (user_id, music_id) VALUES (#{userId}, #{musicId})
+    </insert>
+</mapper>

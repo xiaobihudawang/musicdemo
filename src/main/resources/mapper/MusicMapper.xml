@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- MusicMapper：音乐数据访问接口，提供歌曲的增删查改及统计功能 -->
+<mapper namespace="org.example.musicdemo.mapper.MusicMapper">
+
+    <!-- 歌曲结果映射：关联用户表查询时使用 -->
+    <resultMap id="musicMap" type="org.example.musicdemo.entity.Music">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="artist" column="artist"/>
+        <result property="description" column="description"/>
+        <result property="filePath" column="file_path"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="commentCount" column="comment_count"/>
+        <result property="downloadCount" column="download_count"/>
+        <result property="userId" column="user_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="username" column="username"/>
+    </resultMap>
+
+    <!-- 分页 + 关键字模糊查询歌曲列表（支持 title/artist 搜索） -->
+    <select id="findList" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM music m
+        LEFT JOIN `user` u ON m.user_id = u.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (m.title LIKE CONCAT('%', #{keyword}, '%')
+                     OR m.artist LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY m.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 根据关键字统计歌曲总数（用于分页） -->
+    <select id="countList" resultType="int">
+        SELECT COUNT(*) FROM music
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                     OR artist LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据 ID 查询单首歌曲详情 -->
+    <select id="findById" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM music m
+        LEFT JOIN `user` u ON m.user_id = u.id
+        WHERE m.id = #{id}
+    </select>
+
+    <!-- 新增歌曲记录（自动回填自增 ID） -->
+    <insert id="insert" parameterType="org.example.musicdemo.entity.Music" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO music (title, artist, description, file_path, file_size, like_count, comment_count, download_count, user_id)
+        VALUES (#{title}, #{artist}, #{description}, #{filePath}, #{fileSize}, #{likeCount}, #{commentCount}, #{downloadCount}, #{userId})
+    </insert>
+
+    <!-- 根据 ID 删除歌曲 -->
+    <delete id="deleteById">
+        DELETE FROM music WHERE id = #{id}
+    </delete>
+
+    <!-- 更新点赞数（delta 为 +1 或 -1） -->
+    <update id="updateLikeCount">
+        UPDATE music SET like_count = like_count + #{delta} WHERE id = #{id}
+    </update>
+
+    <!-- 更新评论数（delta 为 +1 或 -1） -->
+    <update id="updateCommentCount">
+        UPDATE music SET comment_count = comment_count + #{delta} WHERE id = #{id}
+    </update>
+
+    <!-- 下载次数 +1 -->
+    <update id="updateDownloadCount">
+        UPDATE music SET download_count = download_count + 1 WHERE id = #{id}
+    </update>
+</mapper>

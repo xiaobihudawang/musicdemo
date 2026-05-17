@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐管理</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h2 style="margin-bottom: 20px;">音乐管理</h2>
+    <!-- 音乐管理表格 -->
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>歌手</th>
+                    <th>上传者</th>
+                    <th>点赞</th>
+                    <th>评论</th>
+                    <th>下载</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="musicTable">
+                <tr><td colspan="9" style="text-align:center;">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // 权限校验：非管理员不可访问
+        if (getUserRole() !== 'admin') {
+            showToast('无权访问', 'error');
+            setTimeout(() => { window.location.href = '/'; }, 1000);
+        }
+
+        // ========== 加载音乐列表 ==========
+        async function loadMusic() {
+            const res = await get('/api/music/list?page=1&size=100');
+            if (res.code !== 200) return;
+
+            const list = res.data.list;
+            document.getElementById('musicTable').innerHTML = list.map(m => `
+                <tr>
+                    <td>${m.id}</td>
+                    <td><a href="/detail.html?id=${m.id}">${escapeHtml(m.title)}</a></td>
+                    <td>${escapeHtml(m.artist)}</td>
+                    <td>${escapeHtml(m.username)}</td>
+                    <td>${m.likeCount}</td>
+                    <td>${m.commentCount}</td>
+                    <td>${m.downloadCount}</td>
+                    <td>${formatDate(m.createTime)}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMusic(${m.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ========== 删除音乐 ==========
+        async function deleteMusic(id) {
+            if (!confirm('确定删除这首音乐吗？删除后不可恢复！')) return;
+            const res = await del('/api/admin/music/' + id);
+            if (res.code === 200) {
+                showToast('删除成功', 'success');
+                loadMusic();
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadMusic();
+    </script>
+</body>
+</html>

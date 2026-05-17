@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- LikeRecordMapper：点赞记录数据访问接口，提供点赞记录的增删查功能 -->
+<mapper namespace="org.example.musicdemo.mapper.LikeRecordMapper">
+
+    <!-- 点赞记录结果映射 -->
+    <resultMap id="likeRecordMap" type="org.example.musicdemo.entity.LikeRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="musicId" column="music_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!-- 新增点赞记录 -->
+    <insert id="insert" parameterType="org.example.musicdemo.entity.LikeRecord">
+        INSERT INTO like_record (user_id, music_id) VALUES (#{userId}, #{musicId})
+    </insert>
+
+    <!-- 取消点赞（根据用户 ID 和歌曲 ID 删除记录） -->
+    <delete id="delete">
+        DELETE FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
+    </delete>
+
+    <!-- 查询用户是否已点赞某歌曲 -->
+    <select id="findByUserAndMusic" resultMap="likeRecordMap">
+        SELECT * FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
+    </select>
+</mapper>

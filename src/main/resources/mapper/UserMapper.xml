@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace 必须和接口全路径一致 -->
+<mapper namespace="org.example.musicdemo.mapper.UserMapper">
+
+    <!-- 结果映射：告诉 MyBatis 如何把查询结果映射到 User 对象 -->
+    <resultMap id="userMap" type="org.example.musicdemo.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+        <result property="role" column="role"/>
+        <result property="enabled" column="enabled"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!-- 根据用户名查询 -->
+    <select id="findByUsername" resultMap="userMap">
+        SELECT * FROM `user` WHERE username = #{username}
+    </select>
+
+    <!-- 插入用户，useGeneratedKeys 表示获取数据库自增的主键 -->
+    <insert id="insert" parameterType="org.example.musicdemo.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user` (username, password, name, email, role, enabled)
+        VALUES (#{username}, #{password}, #{name}, #{email}, #{role}, #{enabled})
+    </insert>
+
+    <!-- 查询所有用户 -->
+    <select id="findAll" resultMap="userMap">
+        SELECT * FROM `user` ORDER BY create_time DESC
+    </select>
+
+    <!-- 更新启用状态 -->
+    <update id="updateEnabled">
+        UPDATE `user` SET enabled = #{enabled} WHERE id = #{id}
+    </update>
+</mapper>

@@ -22,6 +22,11 @@
         SELECT * FROM `user` WHERE username = #{username}
     </select>
 
+    <!-- 根据 ID 查询 -->
+    <select id="findById" resultMap="userMap">
+        SELECT * FROM `user` WHERE id = #{id}
+    </select>
+
     <!-- 插入用户，useGeneratedKeys 表示获取数据库自增的主键 -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `user` (username, password, name, email, role, enabled)

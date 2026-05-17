@@ -12,6 +12,7 @@ import java.util.List;
 @Mapper
 public interface UserMapper {
     User findByUsername(@Param("username") String username);
+    User findById(@Param("id") Integer id);
     int insert(User user);
     List<User> findAll();
     int updateEnabled(@Param("id") Integer id, @Param("enabled") Boolean enabled);

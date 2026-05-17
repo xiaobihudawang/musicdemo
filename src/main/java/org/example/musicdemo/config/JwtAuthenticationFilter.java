@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.musicdemo.entity.User;
+import org.example.musicdemo.mapper.UserMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,9 +35,11 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final UserMapper userMapper;
 
-    public JwtAuthenticationFilter(JwtUtils jwtUtils) {
+    public JwtAuthenticationFilter(JwtUtils jwtUtils, UserMapper userMapper) {
         this.jwtUtils = jwtUtils;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -55,18 +59,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = (String) claims.get("username");
             String role = (String) claims.get("role");
 
-            // 4. 构建认证对象
-            // Spring Security 中，权限需要 ROLE_ 前缀
-            List<SimpleGrantedAuthority> authorities =
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            // 4. 校验用户是否仍处于启用状态
+            User user = userMapper.findById(userId);
+            if (user != null && Boolean.TRUE.equals(user.getEnabled())) {
+                // 5. 构建认证对象
+                // Spring Security 中，权限需要 ROLE_ 前缀
+                List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            // 5. 设置到安全上下文中（后续代码可以通过 SecurityContextHolder 拿到）
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 6. 设置到安全上下文中（后续代码可以通过 SecurityContextHolder 拿到）
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         // 6. 继续执行后面的过滤器（很重要！不能忘记）

@@ -27,6 +27,14 @@ function formatSize(bytes) {
     return size.toFixed(1) + ' ' + units[unitIndex];
 }
 
+/** HTML 转义（防止 XSS） */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 /** 退出登录 */
 function logout() {
     clearToken();
@@ -40,7 +48,7 @@ function renderNavbar() {
 
     const logo = document.createElement('div');
     logo.className = 'logo';
-    logo.innerHTML = '<a href="/" style="color:white;">🎵 音乐分享</a>';
+    logo.innerHTML = '<a href="/"><img src="/video/logo.png" alt="音乐分享" style="height:36px;vertical-align:middle;"></a>';
     nav.appendChild(logo);
 
     const links = document.createElement('div');
@@ -73,6 +81,23 @@ function renderNavbar() {
     return nav;
 }
 
+/** Loading overlay fade-out */
+function fadeOutLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+
+    const minDuration = 1200;
+    const elapsed = performance.now();
+    const remaining = Math.max(0, minDuration - elapsed);
+
+    setTimeout(function() {
+        overlay.classList.add('fade-out');
+        setTimeout(function() {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        }, 600);
+    }, remaining);
+}
+
 /** 页面加载完成后自动插入导航栏 */
 document.addEventListener('DOMContentLoaded', function() {
     // 在 body 最前面插入导航栏
@@ -87,4 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(navbar.nextSibling);
     }
     document.body.appendChild(container);
+
+    // Fade out loading overlay
+    fadeOutLoading();
 });

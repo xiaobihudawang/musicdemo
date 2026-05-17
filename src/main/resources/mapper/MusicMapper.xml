@@ -80,4 +80,40 @@
     <update id="updateDownloadCount">
         UPDATE music SET download_count = download_count + 1 WHERE id = #{id}
     </update>
+
+    <!-- 本周点赞排行 TOP10 -->
+    <select id="findWeeklyLikeTop10" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM like_record lr
+        JOIN music m ON lr.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        WHERE lr.create_time BETWEEN #{start} AND #{end}
+        GROUP BY lr.music_id
+        ORDER BY COUNT(lr.id) DESC
+        LIMIT 10
+    </select>
+
+    <!-- 本周下载排行 TOP10 -->
+    <select id="findWeeklyDownloadTop10" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM download_record dr
+        JOIN music m ON dr.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        WHERE dr.create_time BETWEEN #{start} AND #{end}
+        GROUP BY dr.music_id
+        ORDER BY COUNT(dr.id) DESC
+        LIMIT 10
+    </select>
+
+    <!-- 本周评论排行 TOP10 -->
+    <select id="findWeeklyCommentTop10" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM comment c
+        JOIN music m ON c.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        WHERE c.create_time BETWEEN #{start} AND #{end}
+        GROUP BY c.music_id
+        ORDER BY COUNT(c.id) DESC
+        LIMIT 10
+    </select>
 </mapper>

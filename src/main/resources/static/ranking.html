@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <img src="/video/logo.png" alt="Loading">
+</div>
     <h2 style="margin-bottom: 20px;">本周排行榜</h2>
 
     <!-- 排行榜 Tab 切换 -->
@@ -18,7 +21,16 @@
 
     <div class="card">
         <div id="rankList">
-            <div class="tip">加载中...</div>
+            <div id="rankSkeleton">
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+                <div style="height:16px;"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+                <div style="height:16px;"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+            </div>
         </div>
     </div>
 
@@ -40,6 +52,7 @@
             const res = await get('/api/ranking/' + currentType);
             if (res.code !== 200) return;
 
+            document.getElementById('rankSkeleton').classList.add('hidden');
             const list = res.data;
             if (!list || list.length === 0) {
                 document.getElementById('rankList').innerHTML =
@@ -64,13 +77,6 @@
                     </div>
                 `;
             }).join('');
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         loadRanking();

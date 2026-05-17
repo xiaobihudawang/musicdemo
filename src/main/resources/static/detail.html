@@ -7,8 +7,20 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <img src="/video/logo.png" alt="Loading">
+</div>
     <div id="detailContent">
-        <div class="tip">加载中...</div>
+        <div id="detailSkeleton" class="card">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-line-sm"></div>
+            <div style="height:16px;"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div style="height:16px;"></div>
+            <div class="skeleton skeleton-block"></div>
+        </div>
     </div>
 
     <script src="/js/api.js"></script>
@@ -33,6 +45,7 @@
                 return;
             }
 
+            document.getElementById('detailSkeleton').classList.add('hidden');
             musicData = res.data.music;
             const comments = res.data.comments || [];
             renderDetail(musicData, comments);
@@ -210,13 +223,6 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         loadDetail();

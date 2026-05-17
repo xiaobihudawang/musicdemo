@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <img src="/video/logo.png" alt="Loading">
+</div>
     <h2 style="margin-bottom: 20px;">用户管理</h2>
     <!-- 用户管理表格 -->
     <div class="card">
@@ -24,7 +27,7 @@
                 </tr>
             </thead>
             <tbody id="userTable">
-                <tr><td colspan="8" style="text-align:center;">加载中...</td></tr>
+                <tr id="usersTableSkeleton"><td colspan="8"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line-sm"></div><div style="height:8px;"></div><div class="skeleton skeleton-line"></div></td></tr>
             </tbody>
         </table>
     </div>
@@ -43,6 +46,7 @@
             const res = await get('/api/admin/users');
             if (res.code !== 200) return;
 
+            document.getElementById('usersTableSkeleton').classList.add('hidden');
             const users = res.data;
             document.getElementById('userTable').innerHTML = users.map(u => `
                 <tr>
@@ -75,13 +79,6 @@
             } else {
                 showToast(res.message, 'error');
             }
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         loadUsers();

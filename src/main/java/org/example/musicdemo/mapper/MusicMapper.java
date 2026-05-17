@@ -35,4 +35,13 @@ public interface MusicMapper {
 
     /** 更新下载数 */
     int updateDownloadCount(@Param("id") Integer id);
+
+    /** 本周点赞排行 TOP10 */
+    List<Music> findWeeklyLikeTop10(@Param("start") String start, @Param("end") String end);
+
+    /** 本周下载排行 TOP10 */
+    List<Music> findWeeklyDownloadTop10(@Param("start") String start, @Param("end") String end);
+
+    /** 本周评论排行 TOP10 */
+    List<Music> findWeeklyCommentTop10(@Param("start") String start, @Param("end") String end);
 }

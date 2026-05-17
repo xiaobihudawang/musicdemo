@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <img src="/video/logo.png" alt="Loading">
+</div>
     <h2 style="margin-bottom: 20px;">音乐管理</h2>
     <!-- 音乐管理表格 -->
     <div class="card">
@@ -25,7 +28,7 @@
                 </tr>
             </thead>
             <tbody id="musicTable">
-                <tr><td colspan="9" style="text-align:center;">加载中...</td></tr>
+                <tr id="musicTableSkeleton"><td colspan="9"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line-sm"></div><div style="height:8px;"></div><div class="skeleton skeleton-line"></div></td></tr>
             </tbody>
         </table>
     </div>
@@ -44,6 +47,7 @@
             const res = await get('/api/music/list?page=1&size=100');
             if (res.code !== 200) return;
 
+            document.getElementById('musicTableSkeleton').classList.add('hidden');
             const list = res.data.list;
             document.getElementById('musicTable').innerHTML = list.map(m => `
                 <tr>
@@ -72,13 +76,6 @@
             } else {
                 showToast(res.message, 'error');
             }
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         loadMusic();

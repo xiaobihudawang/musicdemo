@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <img src="/video/logo.png" alt="Loading">
+</div>
 <h2 style="margin-bottom: 20px;">音乐列表</h2>
 
 <!-- 搜索栏 -->
@@ -18,7 +21,19 @@
 <!-- 音乐列表区域 -->
 <div class="card">
     <ul class="music-list" id="musicList">
-        <div class="tip">加载中...</div>
+        <div id="listSkeleton">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line-sm"></div>
+            <div style="height:16px;"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line-sm"></div>
+            <div style="height:16px;"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line-sm"></div>
+        </div>
     </ul>
 </div>
 
@@ -39,6 +54,8 @@
 
         const res = await get(url);
         if (res.code !== 200) return;
+
+        document.getElementById('listSkeleton').classList.add('hidden');
 
         const data = res.data;
         renderList(data.list);
@@ -101,13 +118,6 @@
         currentPage = 1;
         const keyword = document.getElementById('keyword').value.trim();
         loadList(1, keyword);
-    }
-
-    /** HTML 转义（防止 XSS） */
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     /**

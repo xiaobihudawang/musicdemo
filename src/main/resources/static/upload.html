@@ -27,7 +27,10 @@
             <!-- 简介（选填） -->
             <div class="form-group">
                 <label>简介</label>
-                <textarea id="description" placeholder="这首歌的介绍（可选）" rows="3"></textarea>
+                <div style="display:flex;gap:8px;">
+                    <textarea id="description" placeholder="这首歌的介绍（可选）" rows="3" style="flex:1;"></textarea>
+                    <button class="btn btn-default btn-sm" onclick="generateDescription()" style="white-space:nowrap;align-self:flex-end;" id="aiDescBtn">🤖 AI 生成</button>
+                </div>
             </div>
             <!-- 文件上传 -->
             <div class="form-group">
@@ -67,6 +70,28 @@
                 document.querySelector('.file-upload').classList.add('has-file');
             }
         });
+
+        // ========== AI 生成简介 ==========
+        async function generateDescription() {
+            const title = document.getElementById('title').value.trim();
+            const artist = document.getElementById('artist').value.trim();
+            if (!title) { showToast('请先填写歌曲标题', 'error'); return; }
+
+            const btn = document.getElementById('aiDescBtn');
+            btn.disabled = true;
+            btn.textContent = '🤖 生成中...';
+
+            const res = await post('/api/ai/description', { title, artist });
+            if (res.code === 200) {
+                document.getElementById('description').value = res.data.description;
+                showToast('简介生成成功', 'success');
+            } else {
+                showToast(res.message || '生成失败', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🤖 AI 生成';
+        }
 
         // ========== 上传逻辑 ==========
         async function doUpload() {

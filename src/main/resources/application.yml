@@ -41,3 +41,9 @@ jwt:
 music:
   file-path: D:/workspace/music/
 
+# AI 配置（DeepSeek API）
+ai:
+  deepseek:
+    api-key: ${ANTHROPIC_AUTH_TOKEN}
+    api-url: https://api.deepseek.com
+

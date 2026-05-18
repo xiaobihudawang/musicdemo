@@ -63,7 +63,7 @@ function renderNavbar() {
 
         // 如果是管理员，显示管理入口
         if (getUserRole() === 'admin') {
-            userInfo.innerHTML += '<a href="/admin/users.html">管理中心</a>';
+            userInfo.innerHTML += '<a href="/admin/users.html">用户管理</a><a href="/admin/music.html">音乐管理</a>';
         }
 
         userInfo.innerHTML += '<span>' + getUsername() + '</span>';

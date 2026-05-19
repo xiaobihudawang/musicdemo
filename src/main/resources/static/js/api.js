@@ -82,9 +82,11 @@ function getUserRole() {
     return localStorage.getItem(ROLE_KEY) || sessionStorage.getItem(ROLE_KEY);
 }
 
-/** 判断是否已登录 */
+/** 判断是否已登录（检查 token 是否存在且未过期） */
 function isLogined() {
-    return getToken() !== null;
+    const token = getToken();
+    if (!token) return false;
+    return !isTokenExpired(token);
 }
 
 // ==================== HTTP 请求封装 ====================

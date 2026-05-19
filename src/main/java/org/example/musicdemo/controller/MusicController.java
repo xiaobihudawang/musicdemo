@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 音乐控制器，处理音乐列表、详情、上传、下载、删除等HTTP请求
@@ -32,6 +34,8 @@ public class MusicController {
 
     @Value("${music.file-path}")
     private String filePath;
+
+    private static final Logger log = LoggerFactory.getLogger(MusicController.class);
 
     private static final Map<String, String> CONTENT_TYPE_MAP = new HashMap<>(Map.of(
         ".mp3", "audio/mpeg",
@@ -105,7 +109,11 @@ public class MusicController {
 
         Integer userId = getCurrentUserIdOrNull();
         if (userId != null) {
-            musicService.download(id, userId);
+            try {
+                musicService.download(id, userId);
+            } catch (RuntimeException e) {
+                log.warn("记录下载记录失败，不影响文件下载: musicId={}, userId={}", id, userId, e);
+            }
         }
 
         File file = new File(filePath + music.getFilePath());
@@ -121,6 +129,43 @@ public class MusicController {
             response.setContentType(contentType);
             response.setHeader("Content-Disposition",
                     "attachment; filename=" + URLEncoder.encode(music.getTitle() + ext, StandardCharsets.UTF_8));
+            response.setContentLengthLong(file.length());
+
+            try (FileInputStream fis = new FileInputStream(file);
+                 OutputStream os = response.getOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                os.flush();
+            }
+        } catch (IOException e) {
+            response.setStatus(500);
+        }
+    }
+
+    /**
+     * 流式播放音乐文件（给 audio 标签用，不走直接文件路径暴露）
+     */
+    @GetMapping("/{id}/stream")
+    public void stream(@PathVariable Integer id, HttpServletResponse response) {
+        Music music = musicService.findById(id);
+        if (music == null) {
+            response.setStatus(404);
+            return;
+        }
+
+        File file = new File(filePath + music.getFilePath());
+        if (!file.exists()) {
+            response.setStatus(404);
+            return;
+        }
+
+        try {
+            String ext = music.getFilePath().substring(music.getFilePath().lastIndexOf('.'));
+            String contentType = CONTENT_TYPE_MAP.getOrDefault(ext, "application/octet-stream");
+            response.setContentType(contentType);
             response.setContentLengthLong(file.length());
 
             try (FileInputStream fis = new FileInputStream(file);

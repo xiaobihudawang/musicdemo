@@ -55,7 +55,8 @@
         const res = await get(url);
         if (res.code !== 200) return;
 
-        document.getElementById('listSkeleton').classList.add('hidden');
+        const skeleton = document.getElementById('listSkeleton');
+        if (skeleton) skeleton.classList.add('hidden');
 
         const data = res.data;
         renderList(data.list);

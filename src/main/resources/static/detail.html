@@ -85,7 +85,7 @@
                     </p>
                     <p style="color: #666; margin-bottom: 12px;">${escapeHtml(music.description || '暂无简介')}</p>
                     <audio controls>
-                        <source src="/api/music/file/${music.filePath}">
+                        <source src="/api/music/${music.id}/stream">
                         您的浏览器不支持音频播放
                     </audio>
                     <div style="margin-top: 16px; display: flex; gap: 10px; align-items: center;">
@@ -211,18 +211,26 @@
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             if (!response.ok) {
-                showToast('下载失败', 'error');
+                const errMsg = response.status === 401 ? '登录已过期，请重新登录'
+                    : response.status === 404 ? '文件不存在'
+                    : '下载失败(' + response.status + ')';
+                showToast(errMsg, 'error');
                 return;
             }
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = musicData.title + '.' + musicData.filePath.split('.').pop();
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            try {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = musicData.title + '.' + musicData.filePath.split('.').pop();
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('下载成功', 'success');
+            } catch (e) {
+                showToast('下载文件处理失败', 'error');
+            }
         }
 
         loadDetail();

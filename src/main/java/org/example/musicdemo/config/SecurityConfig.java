@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/music/file/**").permitAll()     // 音乐文件播放
                         .requestMatchers("/api/music/list").permitAll()               // 列表
                         .requestMatchers(HttpMethod.GET, "/api/music/*").permitAll()  // 详情
+                        .requestMatchers(HttpMethod.GET, "/api/music/*/stream").permitAll()  // 播放
                         .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll() // 排行榜
 
                         // ===== 管理员专用接口 =====

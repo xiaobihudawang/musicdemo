@@ -56,7 +56,7 @@ function renderNavbar() {
     links.innerHTML = '<a href="/">首页</a><a href="/ranking.html">排行榜</a>';
 
     if (isLogined()) {
-        links.innerHTML += '<a href="/upload.html">上传音乐</a>';
+        links.innerHTML += '<a href="/upload.html">上传音乐</a><a href="/bilibili.html">B站下载</a>';
 
         const userInfo = document.createElement('div');
         userInfo.className = 'user-info';

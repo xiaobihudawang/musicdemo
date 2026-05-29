@@ -1,17 +1,35 @@
 <!DOCTYPE html>
+<!-- ============================================================
+     页面：后台用户管理（管理员专用）
+     以表格形式展示所有注册用户及其信息（ID、用户名、昵称、
+     邮箱、角色、启用状态、创建时间）。
+     管理员可切换用户的启用/禁用状态。
+     非管理员访问会被拦截并跳回首页。
+     ============================================================ -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-    <h2 style="margin-bottom: 20px;">用户管理</h2>
-    <!-- 用户管理表格 -->
+    <!-- ========== 全屏加载遮罩 ========== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
+
+    <!-- ========== 页面标题 ========== -->
+    <div class="page-header">
+        <h1>用户管理</h1>
+        <div class="meta">ADMIN / USERS</div>
+    </div>
+
+    <!-- ========== 用户管理表格 ==========
+         表头：ID、用户名、昵称、邮箱、角色、状态、创建时间、操作
+         数据由 loadUsers() 动态加载 -->
     <div class="card">
         <table class="table">
             <thead>
@@ -27,6 +45,7 @@
                 </tr>
             </thead>
             <tbody id="userTable">
+                <!-- 骨架屏：数据加载前的占位 -->
                 <tr id="usersTableSkeleton"><td colspan="8"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line-sm"></div><div style="height:8px;"></div><div class="skeleton skeleton-line"></div></td></tr>
             </tbody>
         </table>
@@ -35,29 +54,43 @@
     <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
     <script>
+        // ============================================================
         // 权限校验：非管理员不可访问
+        // ============================================================
         if (getUserRole() !== 'admin') {
             showToast('无权访问', 'error');
             setTimeout(() => { window.location.href = '/'; }, 1000);
         }
 
-        // ========== 加载用户列表 ==========
+        // ============================================================
+        // loadUsers —— 加载所有用户列表
+        // 调用 GET /api/admin/users 接口（需要 ROLE_ADMIN 权限）
+        // 返回用户对象数组，包含 id, username, name, email, role,
+        // enabled, createTime 等字段
+        // 渲染为表格行，每一行显示用户信息和一个"启用/禁用"按钮
+        // ============================================================
         async function loadUsers() {
             const res = await get('/api/admin/users');
             if (res.code !== 200) return;
 
+            // 隐藏骨架屏
             document.getElementById('usersTableSkeleton').classList.add('hidden');
+
             const users = res.data;
             document.getElementById('userTable').innerHTML = users.map(u => `
                 <tr>
                     <td>${u.id}</td>
                     <td>${escapeHtml(u.username)}</td>
-                    <td>${escapeHtml(u.name || '-')}</td>
-                    <td>${escapeHtml(u.email || '-')}</td>
+                    <td>${escapeHtml(u.name || '-')}</td>       <!-- 昵称为空显示 '-' -->
+                    <td>${escapeHtml(u.email || '-')}</td>      <!-- 邮箱为空显示 '-' -->
+                    <!-- 角色显示：管理员为金色，普通用户直接显示 -->
                     <td>${u.role === 'admin' ? '<span style="color:#E6A23C;">管理员</span>' : '普通用户'}</td>
+                    <!-- 状态显示：启用为绿色，禁用为红色 -->
                     <td>${u.enabled ? '<span style="color:#67C23A;">启用</span>' : '<span style="color:#F56C6C;">禁用</span>'}</td>
                     <td>${formatDate(u.createTime)}</td>
                     <td>
+                        <!-- 操作按钮：当前启用则显示"禁用"（红色），反之显示"启用"（绿色）
+                            点击后调用 toggleStatus(id, newEnabledState) -->
                         <button class="btn btn-sm ${u.enabled ? 'btn-danger' : 'btn-success'}"
                                 onclick="toggleStatus(${u.id}, ${!u.enabled})">
                             ${u.enabled ? '禁用' : '启用'}
@@ -67,7 +100,16 @@
             `).join('');
         }
 
-        // ========== 切换用户启用/禁用状态 ==========
+        // ============================================================
+        // toggleStatus —— 切换用户启用/禁用状态
+        // 参数：
+        //   id      - 用户 ID
+        //   enabled - 要设置的新状态（true=启用, false=禁用）
+        // 调用 PUT /api/admin/users/{id}/status
+        // 请求体：{ enabled: true/false }
+        // 操作前弹出 confirm 确认
+        // 成功后重新加载用户列表
+        // ============================================================
         async function toggleStatus(id, enabled) {
             const action = enabled ? '启用' : '禁用';
             if (!confirm(`确定${action}该用户吗？`)) return;
@@ -75,12 +117,15 @@
             const res = await put('/api/admin/users/' + id + '/status', { enabled });
             if (res.code === 200) {
                 showToast('操作成功', 'success');
-                loadUsers();
+                loadUsers();  // 刷新列表
             } else {
                 showToast(res.message, 'error');
             }
         }
 
+        // ============================================================
+        // 页面初始化：加载用户列表
+        // ============================================================
         loadUsers();
     </script>
 </body>

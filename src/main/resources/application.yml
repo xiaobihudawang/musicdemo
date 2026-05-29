@@ -1,49 +1,91 @@
-# 服务端口：8443（默认是 8080）
+# ============================================================
+# 应用主配置文件 — 音乐分享平台
+# Spring Boot 3.3.6 / Java 17 / MyBatis / JWT / MySQL 8.0
+# ============================================================
+
+# ============================================================
+# 服务器配置
+# 端口：8443（非标准 HTTP 端口，避免与常见服务冲突）
+# ============================================================
 server:
   port: 8443
 
+# ============================================================
+# Spring 框架核心配置
+# ============================================================
 spring:
+  # ==================== 数据源配置 ====================
+  # MySQL 8.0 数据库连接配置
+  # 数据库名：music_platform（需手动创建）
+  # 参数说明：
+  #   useUnicode=true&characterEncoding=utf-8  → UTF-8 编码
+  #   serverTimezone=Asia/Shanghai             → 东八区时区
+  #   allowPublicKeyRetrieval=true             → 允许公钥检索
+  #   useSSL=false                             → 禁用 SSL（本地开发）
   datasource:
     url: jdbc:mysql://localhost:3306/music_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: 963369Lbc
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  # SQL 初始化：设为 never 不使用 schema.sql 自动建表
+  # ==================== SQL 初始化配置 ====================
+  # mode: never 表示不使用 schema.sql/data.sql 自动建表
+  # 建表操作通过 MyBatis 或其他方式手动管理
   sql:
     init:
       mode: never
 
-  # 文件上传大小限制：50MB
+  # ==================== 文件上传配置 ====================
+  # 单文件和总请求大小均限制为 50MB
+  # 超出限制时后端会抛出 MaxUploadSizeExceededException
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: 50MB        # 单个文件最大 50MB
+      max-request-size: 50MB     # 整个请求最大 50MB（含其他表单字段）
 
-# MyBatis 配置
+# ============================================================
+# MyBatis 持久层框架配置
+# ============================================================
 mybatis:
-  # XML 映射文件路径
+  # XML 映射文件路径：所有 Mapper XML 放在 classpath:mapper/ 下
   mapper-locations: classpath:mapper/*.xml
-  # 类型别名包：简化 XML 中类的全限定名
+  # 类型别名包：XML 中可以直接写 entity 类名而不用全限定名
   type-aliases-package: org.example.musicdemo.entity
   configuration:
-    # 下划线转驼峰：create_time → createTime
+    # 下划线转驼峰命名映射
+    # 开启后，数据库字段 create_time 自动映射为 Java 属性 createTime
+    # 等效于 mybatis.configuration.map-underscore-to-camel-case=true
     map-underscore-to-camel-case: true
 
-# JWT 配置
+# ============================================================
+# JWT（JSON Web Token）认证配置
+# ============================================================
 jwt:
-  # JWT 密钥（不要泄露给任何人）
+  # JWT 签名密钥（HS256 算法）
+  # 必须保密，生产环境应使用环境变量或密钥管理服务
   secret: MusicPlatformSecretKeyForJWT2024VeryLongAndSecure
-  # Token 过期时间（毫秒）
+  # Token 过期时间（单位：毫秒）
+  # 259200000ms = 72 小时 = 3 天
+  # 注意：前端 AGENTS.md 提到可能有 20000ms 的 dev 覆盖值
   expiration: 259200000
 
-# 音乐文件存储路径
+# ============================================================
+# 音乐文件存储路径配置
+# 物理文件存储在服务器的指定目录中
+# WebConfig 将 /api/music/file/** 映射到此路径
+# ============================================================
 music:
   file-path: D:/workspace/music/
 
-# AI 配置（DeepSeek API）
+# ============================================================
+# AI 智能服务配置（DeepSeek API）
+# 用于 AI 自动生成音乐简介等功能
+# ============================================================
 ai:
   deepseek:
+    # API 密钥：从环境变量 ANTHROPIC_AUTH_TOKEN 读取
+    # 避免将密钥明文写在配置文件中
     api-key: ${ANTHROPIC_AUTH_TOKEN}
+    # DeepSeek API 基础地址
     api-url: https://api.deepseek.com
 

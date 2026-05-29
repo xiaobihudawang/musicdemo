@@ -1,141 +1,259 @@
-# 音乐分享平台 (Music Sharing Platform)
-![img.png](img.png)
-基于 Spring Boot 3.3.6 + MyBatis + JWT 的音乐分享平台，提供音乐上传、播放、评论、点赞、排行及 AI 辅助功能。
+# 音乐分享平台 (MusicDemo)
+
+一个基于 **Spring Boot 3.3.6 + MyBatis + Spring Security + JWT** 的全栈音乐分享平台。纯 HTML/CSS/JS 前端，Anthropic 纸质感设计风格。
+
+---
 
 ## 技术栈
 
-- **后端**: Spring Boot 3.3.6 / Java 17 / MyBatis / Spring Security / JWT (jjwt 0.12.6)
-- **数据库**: MySQL 8.0
-- **日志**: Log4j2
-- **前端**: 纯 HTML/CSS/JavaScript (无框架)
-- **AI 集成**: DeepSeek API
+| 层级 | 技术 |
+|------|------|
+| 后端 | Java 17, Spring Boot 3.3.6, Spring Security 6, MyBatis 3.0.4 |
+| 数据库 | MySQL 8.0 |
+| 认证 | JWT (jjwt 0.12.6), BCrypt 密码加密 |
+| 前端 | 纯 HTML/CSS/JS (无框架), Cormorant Garamond + Noto Serif SC 衬线字体 |
+| 外部集成 | listen1api (Node.js 子进程, 聚合 6 平台音乐搜索), NetEase CloudSearch (封面), Bilibili (Python 下载器) |
+| 构建 | Maven (mvnw wrapper), Log4j2 日志 |
+
+---
+
+## 快速开始
+
+### 前置条件
+
+- JDK 17+
+- Node.js (for listen1api worker)
+- MySQL 8.0
+- Python 3 (for Bilibili downloader)
+
+### 1. 创建数据库
+
+```sql
+CREATE DATABASE IF NOT EXISTS music_platform DEFAULT CHARACTER SET utf8mb4;
+```
+
+手动执行 `schema.sql` 创建 5 张表：`user`, `music`, `comment`, `like_record`, `download_record`。
+
+### 2. 安装 Node.js 依赖
+
+```bash
+cd sidecar
+npm install
+```
+
+### 3. 配置 `application.yml`
+
+编辑 `src/main/resources/application.yml`：
+- 修改 `spring.datasource` 的 MySQL 连接信息（用户名/密码）
+- 确认 `music.file-path`（音乐文件存储路径，默认 `D:/workspace/music/`）
+- 可选：配置 `ai.deepseek.api-key`（用于 AI 生成音乐简介，从环境变量 `ANTHROPIC_AUTH_TOKEN` 读取）
+
+### 4. 启动
+
+```bash
+mvnw.cmd spring-boot:run
+```
+
+访问 `http://localhost:8443`
+
+### 构建 JAR
+
+```bash
+mvnw.cmd clean package
+java -jar target/musicdemo-0.0.1-SNAPSHOT.jar
+```
+
+---
 
 ## 项目结构
 
 ```
-src/main/java/org/example/musicdemo/
-├── common/          # 通用组件 (Result 统一响应等)
-├── config/          # 配置类 (Security, JWT, Web, MyBatis 等)
-├── controller/      # 控制器层
-│   ├── AuthController      # 认证 (登录/注册)
-│   ├── MusicController     # 音乐管理
-│   ├── CommentController   # 评论管理
-│   ├── LikeController      # 点赞管理
-│   ├── RankingController   # 排行榜
-│   ├── AdminController     # 后台管理
-│   ├── AiController        # AI 功能
-│   └── BilibiliController  # B站相关
-├── service/         # 业务逻辑层
-├── mapper/          # 数据访问层 (MyBatis)
-└── entity/          # 实体类 (User, Music, Comment, LikeRecord, DownloadRecord)
-
-src/main/resources/
-├── application.yml  # 应用配置
-├── schema.sql       # 数据库建表脚本
-├── data.sql         # 初始数据
-├── mapper/*.xml     # MyBatis XML 映射文件
-└── static/          # 前端页面
-    ├── index.html       # 首页
-    ├── login.html       # 登录页
-    ├── register.html    # 注册页
-    ├── detail.html      # 音乐详情页
-    ├── upload.html      # 上传页
-    ├── ranking.html     # 排行榜页
-    ├── bilibili.html    # B站相关页
-    └── admin/           # 后台管理
-        ├── music.html   # 音乐管理
-        └── users.html   # 用户管理
+musicdemo/
+├── src/main/java/org/example/musicdemo/
+│   ├── common/              # 通用工具
+│   │   └── Result.java          统一 API 响应格式 {code, message, data}
+│   │   └── ResultCode.java      状态码枚举 (200/400/401/403/404/500)
+│   ├── config/              # 配置类
+│   │   ├── JwtUtils.java        JWT 签发/解析/验签
+│   │   ├── JwtAuthenticationFilter.java  JWT 请求过滤
+│   │   ├── SecurityConfig.java  Spring Security 规则
+│   │   └── WebConfig.java      静态资源映射
+│   ├── controller/          # REST 控制器 (9 个)
+│   │   ├── AuthController.java       POST /api/auth/login, /register
+│   │   ├── MusicController.java      GET/POST/DELETE /api/music/**
+│   │   ├── CommentController.java    GET/POST/DELETE /api/comment/**
+│   │   ├── LikeController.java       POST/DELETE /api/like/**
+│   │   ├── RankingController.java    GET /api/ranking/**
+│   │   ├── AdminController.java      GET/PUT/DELETE /api/admin/**
+│   │   ├── Listen1Controller.java    GET /api/external/**
+│   │   ├── BilibiliController.java   POST /api/bilibili/download
+│   │   └── AiController.java         POST /api/ai/description
+│   ├── entity/              # 实体类 (5 个)
+│   │   ├── User.java
+│   │   ├── Music.java             含 coverPath 封面字段
+│   │   ├── Comment.java
+│   │   ├── LikeRecord.java
+│   │   └── DownloadRecord.java
+│   ├── mapper/              # MyBatis Mapper 接口 (5 个)
+│   └── service/             # 服务层 (9 个)
+│       ├── UserService.java
+│       ├── MusicService.java       上传自动获取封面
+│       ├── CommentService.java
+│       ├── LikeService.java
+│       ├── RankingService.java
+│       ├── Listen1Service.java      Node.js 子进程代理
+│       ├── CoverService.java       多源封面搜索下载
+│       ├── BilibiliService.java     Python 子进程
+│       └── AiService.java          DeepSeek API 调用
+├── src/main/resources/
+│   ├── application.yml        主配置
+│   ├── schema.sql             数据库 DDL (5 表)
+│   ├── mapper/                5 个 Mapper XML
+│   └── static/                前端页面
+│       ├── index.html             首页 (歌单 + 搜索 + 分页)
+│       ├── detail.html            详情 (播放器 + 封面 + 评论)
+│       ├── ranking.html           排行榜 (点赞/下载/评论 3 标签)
+│       ├── upload.html            上传 (含 AI 描述生成)
+│       ├── bilibili.html          B 站音频下载
+│       ├── login.html / register.html  登录/注册
+│       ├── admin/users.html / music.html  管理后台
+│       ├── css/style.css          纸质感主题样式表
+│       └── js/api.js / common.js  HTTP 封装 + 导航栏/工具函数
+├── sidecar/                  # 外部脚本
+│   ├── listen1-worker.js          listen1api 子进程入口
+│   ├── listen1-api.min.js         聚合 6 平台 API 库
+│   ├── listen1-server.js          (备选) 服务器模式
+│   ├── netease-search.js          独立 NetEase 搜索
+│   ├── package.json / node_modules/
+│   ├── test-search.js
+│   └── public/
+└── schema.sql / data.sql
 ```
 
-## 快速开始
+---
 
-### 环境要求
+## API 总览
 
-- Java 17+
-- Maven 3.6+
-- MySQL 8.0+
+### 认证 (`/api/auth`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| POST | `/api/auth/register` | 注册 | 公开 |
+| POST | `/api/auth/login` | 登录 | 公开 |
 
-### 数据库配置
+### 音乐 (`/api/music`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/music/list?page=&size=&keyword=` | 分页列表+搜索 | 公开 |
+| GET | `/api/music/{id}` | 详情+评论 | 公开 |
+| POST | `/api/music/upload` | 上传 (multipart) | 登录 |
+| GET | `/api/music/{id}/stream` | 在线播放 | 公开 |
+| GET | `/api/music/{id}/download` | 下载 | 公开 |
+| DELETE | `/api/music/{id}` | 删除 (本人或管理员) | 登录 |
 
-1. 创建数据库：
-```sql
-CREATE DATABASE music_platform DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+### 评论 (`/api/comment`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/comment/list/{musicId}` | 评论列表 | 公开 |
+| POST | `/api/comment` | 发表评论 | 登录 |
+| DELETE | `/api/comment/{id}` | 删除 (本人) | 登录 |
 
-2. 执行建表脚本 `src/main/resources/schema.sql`
+### 点赞 (`/api/like`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| POST | `/api/like/{musicId}` | 点赞 | 登录 |
+| DELETE | `/api/like/{musicId}` | 取消点赞 | 登录 |
+| GET | `/api/like/check/{musicId}` | 是否已赞 | 登录 |
+| GET | `/api/like/count/{musicId}` | 点赞数 | 公开 |
 
-3. 修改 `application.yml` 中的数据库连接信息
+### 排行榜 (`/api/ranking`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/ranking/likes` | 点赞榜 | 公开 |
+| GET | `/api/ranking/downloads` | 下载榜 | 公开 |
+| GET | `/api/ranking/comments` | 评论榜 | 公开 |
 
-### 构建与运行
+### 管理 (`/api/admin`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/admin/users` | 用户列表 | ADMIN |
+| PUT | `/api/admin/users/{id}/status` | 启用/禁用 | ADMIN |
+| DELETE | `/api/admin/music/{id}` | 删除音乐 | ADMIN |
+| DELETE | `/api/admin/comments/{id}` | 删除评论 | ADMIN |
+| POST | `/api/admin/music/{id}/cover` | 上传封面 | ADMIN |
 
-```bash
-# 编译打包
-mvnw.cmd clean package
+### 外部搜索 (`/api/external`)
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/external/search?source=&keywords=&page=` | 多平台搜索 | 公开 |
+| GET | `/api/external/playlist?source=&offset=` | 热门歌单 | 公开 |
+| GET | `/api/external/playlist/{listId}` | 歌单详情 | 公开 |
+| GET | `/api/external/lyric?trackId=` | 歌词 | 公开 |
+| GET | `/api/external/bootstrap?trackId=` | 获取播放地址 | 公开 |
 
-# 启动应用 (默认端口 8443)
-mvnw.cmd spring-boot:run
+### 其他
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| POST | `/api/bilibili/download` | B站音频下载 | 登录 |
+| POST | `/api/ai/description` | AI 生成音乐简介 | 登录 |
 
-# 运行测试
-mvnw.cmd test
-```
+---
 
-### 访问地址
+## 认证与权限
 
-- 首页: http://localhost:8443/index.html
-- 登录: http://localhost:8443/login.html
-- 后台管理: http://localhost:8443/admin/music.html
+- **认证方式**: JWT Bearer Token, 存储于 `localStorage` key `music_token`
+- **密码**: BCrypt 哈希存储
+- **角色层级**: 游客 → USER (普通用户) → ADMIN (管理员)
+- **安全规则**:
+  - `/api/auth/**` — 公开
+  - GET `/api/music/**` — 公开 (浏览/播放)
+  - GET `/api/ranking/**` — 公开
+  - GET `/api/external/**` — 公开
+  - `/api/music/file/**`, `/api/music/cover/**` — 公开 (文件/封面直链)
+  - `/api/admin/**` — 仅 `ROLE_ADMIN`
+  - 其他 `/api/**` — 需登录
 
-## 配置说明
+---
 
-### 核心配置 (application.yml)
+## 前端设计
 
-| 配置项 | 默认值 | 说明 |
-|--------|--------|------|
-| `server.port` | 8443 | 服务端口 |
-| `spring.datasource.url` | localhost:3306/music_platform | 数据库连接 |
-| `jwt.secret` | MusicPlatformSecretKey... | JWT 密钥 |
-| `jwt.expiration` | 259200000 (3天) | Token 过期时间 |
-| `music.file-path` | D:/workspace/music/ | 音乐文件存储路径 |
-| `ai.deepseek.api-key` | 环境变量 | DeepSeek API Key |
+Anthropic 纸质感风格 (参考 `样板.html`):
+- **底色** `#f5f0e6` + SVG 噪点纹理 (`feTurbulence opacity: 0.03`)
+- **字体** `Cormorant Garamond` (英文衬线) + `Noto Serif SC` (中文衬线)
+- **文字色** `#2c2821` 深棕墨水色
+- **强调色** `#8b6914` 琥珀金
+- **阴影** 暖棕柔影 `rgba(44,40,33, 0.06~0.10)`
+- **布局** 800px 窄版居中，大量留白
+- **水印** 右下角固定 `MUSIC` 文字，`opacity: 0.025`
+- **卡片** `#faf8f5` 暖白表面，`#e0d8cc` 边框
 
-### 安全规则
+---
 
-- **公开访问**: `/api/auth/**`、GET 端点、`/api/ranking/**`
-- **需要认证**: 其他 `/api/**` 端点
-- **管理员权限**: `/api/admin/**` (需要 `ROLE_ADMIN`)
+## 外部集成
 
-## API 响应格式
+### listen1api (音乐搜索)
+- 聚合 NetEase、QQ、Kugou、Kuwo、Migu、Baidu、Xiami 7 个平台的音乐搜索
+- 通过 `ProcessBuilder` 以子进程方式调用 `node sidecar/listen1-worker.js`
+- 每个请求独立进程，无状态，退出后自动回收
 
-所有 API 响应使用统一的 `Result<T>` 格式：
+### 封面自动搜索 (CoverService)
+- 上传音乐时自动获取封面图
+- 优先使用 NetEase CloudSearch (`netease-search.js`)，6 个备用源兜底
+- 下载至 `covers/{uuid}.jpg`，路径存入 `music.cover_path`
+- WebConfig 将 `/api/music/cover/**` 映射至文件系统
 
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": { ... }
-}
-```
+### Bilibili 音频下载
+- `bilibili_demo.py` Python 脚本
+- `BilibiliService` 通过 `ProcessBuilder` 调用，下载音频文件
 
-## 前端说明
+### AI 简介生成
+- 对接 DeepSeek API，根据歌名+歌手自动生成音乐简介
+- API Key 从环境变量 `ANTHROPIC_AUTH_TOKEN` 读取
 
-- `api.js`: 封装 `get/post/put/del` 请求，自动携带 Bearer Token
-- `common.js`: 公共工具函数 (如 `parseJwt()` 解析 Token)
-- Token 存储在 `localStorage` 的 `music_token` 键中
+---
 
 ## 注意事项
 
-1. 首次运行前需手动创建 `music_platform` 数据库并执行 `schema.sql`
-2. 音乐文件存储路径 `music.file-path` 需确保存在且有读写权限
-3. JWT 密钥请妥善保管，不要提交到版本库
-4. AI 功能需要配置有效的 DeepSeek API Key
-
-## 开发规范
-
-- 使用构造器注入 (Lombok `@RequiredArgsConstructor`)，禁止字段注入
-- XML Mapper 文件位于 `src/main/resources/mapper/`
-- 服务层抛出 `RuntimeException`，控制器捕获后返回 `Result.fail(msg)`
-- 数据库字段使用下划线命名，自动映射为驼峰
-
-## License
-
-MIT
+- **Windows 路径**: `File.separator` 在 URL 中会产出 `\`，封面路径硬编码为 `"covers/"` 保持兼容
+- **数据库**: `sql.init.mode=never`，需手动执行 `schema.sql`
+- **JWT 过期**: 默认 259200000ms (72 小时)，可在 `application.yml` 调整
+- **NetEase**: `/api/cloudsearch/pc` (unencrypted, POST with User-Agent + Referer) 可用于搜索和封面获取；`bootstrap_track` 返回空 URL (反爬)，不可用

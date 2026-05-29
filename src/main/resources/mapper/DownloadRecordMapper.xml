@@ -2,11 +2,48 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- DownloadRecordMapper：下载记录数据访问接口，提供下载记录的持久化功能 -->
+<!--
+  ========================================================================
+  DownloadRecordMapper.xml —— 下载记录模块数据访问层映射文件
+
+  对应 Java 接口：org.example.musicdemo.mapper.DownloadRecordMapper
+  数据库表：download_record（下载记录表）
+
+  业务说明：
+    下载记录表用于追踪每首歌曲的下载行为，每条记录表示"某个用户在某个时间点下载了某首歌"。
+    这些记录用于：
+      1. 统计歌曲的下载量（更新 music 表的 download_count 字段）
+      2. 生成"本周下载排行 TOP10"的排行榜数据
+  ========================================================================
+-->
+
 <mapper namespace="org.example.musicdemo.mapper.DownloadRecordMapper">
 
-    <!-- 新增下载记录 -->
+    <!--
+      insert：新增下载记录
+
+      业务逻辑：
+        用户点击下载按钮时，调用此方法记录一条下载日志。
+        一条记录包含三个要素：用户是谁（userId）、下载了哪首歌（musicId）、什么时候下载的（create_time 由数据库自动填充）
+
+      参数：
+        #{userId}  — 下载者的用户 ID（Integer）
+        #{musicId} — 被下载的歌曲 ID（Integer）
+
+      SQL 说明：
+        create_time 字段在表结构中配置了 DEFAULT CURRENT_TIMESTAMP，
+        因此 INSERT 时不需要显式传入，数据库会自动填充当前时间
+
+      事务说明：
+        建议在 Service 层配合 musicMapper.updateDownloadCount() 使用 @Transactional 事务注解
+        确保"记录下载日志"和"更新下载计数"两个操作原子执行，避免数据不一致
+    -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.DownloadRecord">
         INSERT INTO download_record (user_id, music_id) VALUES (#{userId}, #{musicId})
     </insert>
+
+    <delete id="deleteByMusicId">
+        DELETE FROM download_record WHERE music_id = #{musicId}
+    </delete>
+
 </mapper>

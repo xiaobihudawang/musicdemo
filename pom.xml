@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ========================================================================
+  Maven 项目对象模型（POM）配置文件
+  项目名称：musicdemo —— 音乐平台后端
+  Java 版本：17  |  Spring Boot：3.3.6  |  MyBatis + Spring Security + JWT
+  ========================================================================
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- Maven 模型版本，4.0.0 是固定值，表示 POM 4.0 规范 -->
     <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      父工程：继承 Spring Boot Starter Parent
+      好处：统一管理 Spring Boot 所有依赖的版本号，无需在子模块中逐一声明版本
+    -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.6</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/> <!-- 从 Maven 仓库查找父 POM，而非本地文件系统 -->
     </parent>
-    <groupId>org.example</groupId>
-    <artifactId>musicdemo</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>musicdemo</name>
-    <description>musicdemo</description>
+
+    <!-- 项目坐标（GAV）：唯一标识当前项目 -->
+    <groupId>org.example</groupId>       <!-- 项目组 ID，通常为组织域名倒写 -->
+    <artifactId>musicdemo</artifactId>   <!-- 项目工件 ID，通常为模块名 -->
+    <version>0.0.1-SNAPSHOT</version>    <!-- 版本号，SNAPSHOT 表示开发中版本 -->
+    <name>musicdemo</name>               <!-- 项目显示名称 -->
+    <description>musicdemo</description> <!-- 项目描述 -->
+
+    <!-- 项目 URL、许可证、开发者信息、源代码管理等（本项目未填写具体内容） -->
     <url/>
     <licenses>
         <license/>
@@ -26,17 +43,31 @@
         <tag/>
         <url/>
     </scm>
+
+    <!--
+      全局属性定义：可在后续依赖和插件中通过 ${propertyName} 引用
+    -->
     <properties>
-        <java.version>17</java.version>
-        <lombok.version>1.18.38</lombok.version>
+        <java.version>17</java.version>               <!-- 编译和运行的 JDK 版本 -->
+        <lombok.version>1.18.38</lombok.version>      <!-- Lombok 版本号，用于编译期注解处理 -->
     </properties>
+
+    <!-- ========================== 依赖管理 ========================== -->
     <dependencies>
-        <!-- spring-boot-starter-web：提供 Web 开发能力（Tomcat + Spring MVC） -->
+
+        <!--
+          spring-boot-starter-web：Spring Boot Web 开发核心 Starter
+          内置：内嵌 Tomcat 服务器、Spring MVC 框架、RESTful 支持、JSON 序列化（Jackson）
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <exclusions>
-                <!-- 排除默认的 Logback，改用 Log4j2 -->
+                <!--
+                  关键排除：移除默认的 Logback 日志框架
+                  因为本项目的日志方案选用 Log4j2，必须排除 spring-boot-starter-logging，
+                  否则 Logback 和 Log4j2 会同时存在于 classpath 中，导致日志行为异常
+                -->
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-logging</artifactId>
@@ -44,72 +75,118 @@
             </exclusions>
         </dependency>
 
-        <!-- Log4j2 日志：替换 Spring Boot 默认的 Logback -->
+        <!--
+          spring-boot-starter-log4j2：Log4j2 日志框架 Starter
+          替换 Spring Boot 默认的 Logback，提供更强大的异步日志、分层日志、滚动策略等能力
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
-        <!-- spring-boot-starter-security：提供安全认证能力 -->
+        <!--
+          spring-boot-starter-security：Spring Security 安全框架 Starter
+          负责：用户认证（Authentication）、授权（Authorization）、密码加密、会话管理、
+          CSRF 防护等。本项目集成 JWT 实现无状态 Token 认证
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- mybatis-spring-boot-starter：MyBatis 与 Spring Boot 整合 -->
+        <!--
+          mybatis-spring-boot-starter：MyBatis 与 Spring Boot 整合 Starter（版本 3.0.4）
+          提供：SqlSessionFactory 自动配置、Mapper 扫描、事务管理、数据源集成等功能
+        -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>3.0.4</version>
         </dependency>
 
-        <!-- mysql-connector-j：MySQL 数据库驱动 -->
+        <!--
+          mysql-connector-j：MySQL 官方 JDBC 驱动
+          运行时作用域（runtime），因为 JDBC 驱动只在运行期需要，编译期不需要
+        -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JWT 三件套：用于生成和验证 JWT Token -->
-        <!-- jjwt-api：JWT 的 API 接口 -->
+        <!-- ========== JWT（JSON Web Token）三件套 ========== -->
+        <!--
+          jjwt-api：JJWT 库的 API 接口层（版本 0.12.6）
+          只包含公开接口和注解，编译期依赖
+        -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.6</version>
         </dependency>
-        <!-- jjwt-impl：JWT 的实现 -->
+        <!--
+          jjwt-impl：JJWT 的具体实现类
+          runtime 作用域，运行期加载；提供了 JWT 的创建、解析、验签等核心实现
+        -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- jjwt-jackson：JWT 的 JSON 处理（使用 Jackson） -->
+        <!--
+          jjwt-jackson：JJWT 与 Jackson 的序列化桥接
+          负责将 JWT 的 Header/Payload 与 JSON 互相转换
+          同样 runtime 作用域，仅在运行期使用
+        -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!--
+          Lombok：编译期注解工具，自动生成 Getter/Setter/Constructor/Builder 等样板代码
+          标记为 optional，表示不传递到依赖该项目的子项目
+        -->
         <dependency>
-            <groupId>org.projectlombok</groupId>                                                                                                                                                                                                                                                                                <artifactId>lombok</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
-        <!-- spring-boot-starter-test：测试支持 -->
+
+        <!--
+          spring-boot-starter-test：Spring Boot 测试 Starter
+          test 作用域，仅在测试阶段使用
+          内置：JUnit 5、Mockito、AssertJ、Spring Test 等
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
-
+    <!-- ========================== 构建配置 ========================== -->
     <build>
         <plugins>
+
+            <!--
+              Spring Boot Maven 插件
+              功能：将项目打包为可执行的 fat JAR（包含所有依赖）、
+              提供 spring-boot:run 运行命令、自动配置 Main-Class 入口
+            -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!--
+                      排除 Lombok：Lombok 是编译期工具，不需要打包进最终 JAR
+                      它只在 javac 编译阶段通过 annotation processor 生成代码，运行时不需要
+                    -->
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -118,6 +195,12 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!--
+              Maven 编译插件：配置注解处理器路径
+              让 javac 在编译时识别 Lombok 的 @Getter/@Setter 等注解，
+              自动生成对应的字节码
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -130,6 +213,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 

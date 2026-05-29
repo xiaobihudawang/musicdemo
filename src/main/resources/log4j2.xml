@@ -1,24 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ========================================================================
+  Log4j2 日志配置文件
+
+  日志级别优先级（从低到高）：
+    ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < OFF
+
+  日志框架替换说明：
+  Spring Boot 默认使用 Logback，本项目中已排除 spring-boot-starter-logging，
+  并引入 spring-boot-starter-log4j2 来启用 Log4j2，因此此配置文件生效
+  ========================================================================
+-->
+
+<!--
+  status="INFO"：控制 Log4j2 自身内部日志的输出级别
+  设置为 INFO 可看到 Log4j2 的初始化和配置加载信息，方便调试日志配置问题
+-->
 <Configuration status="INFO">
+
+    <!-- ========================== Appender（日志输出目的地）定义 ========================== -->
     <Appenders>
+
+        <!--
+          Console Appender：控制台输出
+          target="SYSTEM_OUT" 表示输出到标准输出流（System.out）
+          开发环境下可实时查看日志，适合开发调试
+        -->
         <Console name="Console" target="SYSTEM_OUT">
+            <!--
+              日志格式模式定义：
+                %d{yyyy-MM-dd HH:mm:ss.SSS}  — 时间戳，精确到毫秒
+                [%t]                          — 线程名称
+                %-5level                      — 日志级别（左对齐，固定宽度 5 字符）
+                %logger{36}                   — 输出日志的类名（最多保留 36 个字符层级）
+                %msg%n                        — 日志消息内容 + 换行符
+            -->
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
+
+        <!--
+          File Appender：文件输出
+          fileName="logs/bilibili.log"  — 日志文件路径，相对项目根目录的 logs/ 文件夹
+          日志会持久化到磁盘，方便生产环境或长时间运行后的日志回溯分析
+        -->
         <File name="File" fileName="logs/bilibili.log">
+            <!-- 与 Console Appender 使用相同的输出格式，保持一致性和可读性 -->
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
+
     </Appenders>
+
+    <!-- ========================== Logger（日志记录器）配置 ========================== -->
     <Loggers>
+
+        <!--
+          自定义 Logger：BilibiliService 类
+          level="DEBUG"        — 该类的日志级别为 DEBUG，可输出详细调试信息
+          additivity="false"   — 不将日志传递到父 Logger（Root），避免重复输出
+          AppenderRef 引用了 Console 和 File 两个 Appender，
+          即 BilibiliService 的日志既打印到控制台，也写入日志文件
+        -->
         <Logger name="org.example.musicdemo.service.BilibiliService" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
+
+        <!--
+          自定义 Logger：BilibiliController 类
+          同样配置为 DEBUG 级别，方便在开发期追踪 B 站相关接口的请求处理流程
+        -->
         <Logger name="org.example.musicdemo.controller.BilibiliController" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
+
+        <!--
+          Root Logger：所有 Logger 的根记录器
+          level="INFO"          — 默认日志级别为 INFO，只输出 INFO 及以上级别的日志
+          AppenderRef ref="Console" — 只输出到控制台，不写入文件（避免大量无关日志刷盘）
+        -->
         <Root level="INFO">
             <AppenderRef ref="Console"/>
         </Root>
+
     </Loggers>
+
 </Configuration>

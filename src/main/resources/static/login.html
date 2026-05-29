@@ -4,83 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="auth-page">
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-<div class="auth-container">
-    <h2>登录</h2>
-    <div class="card">
-        <!-- 用户名输入 -->
-        <div class="form-group">
-            <label>用户名</label>
-            <input type="text" id="username" placeholder="请输入用户名">
-        </div>
-        <!-- 密码输入 -->
-        <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="password" placeholder="请输入密码">
-        </div>
-        <!-- 记住我选项 -->
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="rememberMe" checked>
-                记住我（关闭浏览器后仍保持登录）
-            </label>
-        </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" onclick="doLogin()">登录</button>
-            <a href="/register.html">没有账号？去注册</a>
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
+
+    <div class="auth-container">
+        <h2>登录</h2>
+        <div class="card">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe" checked>
+                    记住我（关闭浏览器后仍保持登录）
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="doLogin()">登录</button>
+                <a href="/register.html">没有账号？去注册</a>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-    // ========== 过期重定向检查 ==========
-    /** 检查是否因过期被重定向至此 */
-    function checkExpired() {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('expired') === '1') {
-            showToast('登录凭证过期，请重新登录', 'error');
-            // 清除过期标记，防止刷新页面重复提示
-            window.history.replaceState({}, '', '/login.html');
-        }
-    }
-
-    // ========== 登录逻辑 ==========
-    async function doLogin() {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const rememberMe = document.getElementById('rememberMe').checked;
-
-        if (!username || !password) {
-            showToast('请输入用户名和密码', 'error');
-            return;
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        function checkExpired() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('expired') === '1') {
+                showToast('登录凭证过期，请重新登录', 'error');
+                window.history.replaceState({}, '', '/login.html');
+            }
         }
 
-        const res = await post('/api/auth/login', {
-            username: username,
-            password: password
-        });
+        async function doLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            if (!username || !password) { showToast('请输入用户名和密码', 'error'); return; }
 
-        if (res.code === 200) {
-            setToken(res.data.token, rememberMe);
-            saveUserInfo(res.data.username, res.data.role, rememberMe);
-            showToast('登录成功，欢迎回来！', 'success');
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
-        } else {
-            showToast(res.message, 'error');
+            const res = await post('/api/auth/login', { username, password });
+            if (res.code === 200) {
+                setToken(res.data.token, rememberMe);
+                saveUserInfo(res.data.username, res.data.role, rememberMe);
+                showToast('登录成功，欢迎回来！', 'success');
+                setTimeout(() => { window.location.href = '/'; }, 1000);
+            } else {
+                showToast(res.message, 'error');
+            }
         }
-    }
 
-    // ========== 页面加载 ==========
-    checkExpired();
-</script>
+        checkExpired();
+    </script>
 </body>
 </html>

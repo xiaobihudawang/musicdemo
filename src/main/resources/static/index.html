@@ -3,157 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音乐分享平台</title>
+    <title>音乐列表</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-<h2 style="margin-bottom: 20px;">音乐列表</h2>
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
 
-<!-- 搜索栏 -->
-<div class="search-bar">
-    <input type="text" id="keyword" placeholder="搜索歌曲标题或歌手...">
-    <button class="btn btn-primary" onclick="search()">搜索</button>
-</div>
+    <div class="page-header">
+        <h1>音乐列表</h1>
+        <div class="meta" id="pageMeta">加载中...</div>
+    </div>
 
-<!-- 音乐列表区域 -->
-<div class="card">
-    <ul class="music-list" id="musicList">
+    <div class="search-bar">
+        <input type="text" id="keyword" placeholder="搜索歌曲标题或歌手..." autocomplete="off">
+        <button class="btn-search" onclick="search()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+    </div>
+
+    <div class="track-list" id="trackList">
         <div id="listSkeleton">
-            <div class="skeleton skeleton-title"></div>
             <div class="skeleton skeleton-line"></div>
             <div class="skeleton skeleton-line-sm"></div>
-            <div style="height:16px;"></div>
-            <div class="skeleton skeleton-line"></div>
+            <div style="height:12px;"></div>
             <div class="skeleton skeleton-line"></div>
             <div class="skeleton skeleton-line-sm"></div>
-            <div style="height:16px;"></div>
+            <div style="height:12px;"></div>
             <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line-sm"></div>
+            <div style="height:12px;"></div>
             <div class="skeleton skeleton-line"></div>
             <div class="skeleton skeleton-line-sm"></div>
         </div>
-    </ul>
-</div>
+    </div>
 
-<!-- 分页区域 -->
-<div class="pagination" id="pagination"></div>
+    <nav class="pagination" id="pagination"></nav>
 
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-    // ========== 状态变量 ==========
-    let currentPage = 1;
-    const pageSize = 10;
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+        const pageSize = 12;
 
-    /** 加载音乐列表 */
-    async function loadList(page, keyword) {
-        let url = `/api/music/list?page=${page}&size=${pageSize}`;
-        if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+        async function loadList(page, keyword) {
+            let url = `/api/music/list?page=${page}&size=${pageSize}`;
+            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
 
-        const res = await get(url);
-        if (res.code !== 200) return;
+            const res = await get(url);
+            if (res.code !== 200) return;
 
-        const skeleton = document.getElementById('listSkeleton');
-        if (skeleton) skeleton.classList.add('hidden');
+            document.getElementById('listSkeleton')?.classList.add('hidden');
 
-        const data = res.data;
-        renderList(data.list);
-        renderPagination(data.total, page);
-    }
-
-    /** 渲染音乐列表 */
-    function renderList(list) {
-        const container = document.getElementById('musicList');
-        if (!list || list.length === 0) {
-            container.innerHTML = '<div class="tip">暂无音乐，快去上传一首吧！</div>';
-            return;
+            const data = res.data;
+            renderList(data.list);
+            renderPagination(data.total, page);
+            document.getElementById('pageMeta').textContent =
+                `第 ${page} 页，共 ${Math.ceil(data.total / pageSize) || 1} 页 — 每页 ${pageSize} 首`;
         }
 
-        container.innerHTML = list.map(item => `
-                <li class="music-item">
-                    <div class="music-info">
-                        <h3><a href="/detail.html?id=${item.id}">${escapeHtml(item.title)}</a></h3>
-                        <p>${escapeHtml(item.artist)} | 上传者：${escapeHtml(item.username)} | ${formatDate(item.createTime)}</p>
+        function renderList(list) {
+            const container = document.getElementById('trackList');
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div class="tip">暂无音乐，快去上传一首吧！</div>';
+                return;
+            }
+
+            container.innerHTML = list.map((item, index) => {
+                const hasCover = item.coverPath;
+                const coverUrl = `/api/music/cover/${item.coverPath}`;
+                const realIndex = (currentPage - 1) * pageSize + index + 1;
+                return `
+                    <div class="track" onclick="location.href='/detail.html?id=${item.id}'">
+                        <span class="track-index">${String(realIndex).padStart(2, '0')}</span>
+                        <div class="track-cover">
+                            ${hasCover
+                                ? `<img src="${coverUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
+                                : `<div class="placeholder">♪</div>`
+                            }
+                        </div>
+                        <div class="track-meta">
+                            <div class="track-title">${escapeHtml(item.title)}</div>
+                            <div class="track-artist">${escapeHtml(item.artist)}</div>
+                        </div>
+                        <button class="track-play" onclick="event.stopPropagation();location.href='/detail.html?id=${item.id}'">
+                            <svg viewBox="0 0 24 24"><polygon points="8,5 20,12 8,19"/></svg>
+                        </button>
                     </div>
-                    <div class="music-actions">
-                        <span>❤️ ${item.likeCount || 0}</span>
-                        <span>💬 ${item.commentCount || 0}</span>
-                        <span>⬇️ ${item.downloadCount || 0}</span>
-                    </div>
-                </li>
-            `).join('');
-    }
-
-    /** 渲染分页 */
-    function renderPagination(total, page) {
-        const totalPages = Math.ceil(total / pageSize);
-        const container = document.getElementById('pagination');
-
-        if (totalPages <= 1) {
-            container.innerHTML = '';
-            return;
+                `;
+            }).join('');
         }
 
-        let html = '';
-        html += `<button ${page <= 1 ? 'disabled' : ''} onclick="goPage(${page - 1})">上一页</button>`;
+        function renderPagination(total, page) {
+            const totalPages = Math.ceil(total / pageSize);
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
 
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="${i === page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+            let html = `<button class="page-arrow" ${page <= 1 ? 'disabled' : ''} onclick="goPage(${page - 1})">&lsaquo;</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+            }
+            html += `<button class="page-arrow" ${page >= totalPages ? 'disabled' : ''} onclick="goPage(${page + 1})">&rsaquo;</button>`;
+            container.innerHTML = html;
         }
 
-        html += `<button ${page >= totalPages ? 'disabled' : ''} onclick="goPage(${page + 1})">下一页</button>`;
-        container.innerHTML = html;
-    }
-
-    /** 跳转到指定页码 */
-    function goPage(page) {
-        currentPage = page;
-        const keyword = document.getElementById('keyword').value.trim();
-        loadList(page, keyword);
-    }
-
-    /** 按关键字搜索音乐 */
-    function search() {
-        currentPage = 1;
-        const keyword = document.getElementById('keyword').value.trim();
-        loadList(1, keyword);
-    }
-
-    /**
-     * ========== Token 校验 ==========
-     * 首页加载时检查 Token 有效性，无效则跳转登录页
-     */
-
-    /** 首页 Token 校验 */
-    async function handleAutoLogin() {
-        const token = getToken();
-
-        if (!token || isTokenExpired(token)) {
-            clearToken();
-            window.location.href = '/login.html?expired=1';
-            return;
+        function goPage(page) {
+            currentPage = page;
+            const keyword = document.getElementById('keyword').value.trim();
+            loadList(page, keyword);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 服务端验签
-        const res = await get('/api/auth/verify');
-        if (res.code !== 200) {
-            clearToken();
-            window.location.href = '/login.html?expired=1';
+        function search() {
+            currentPage = 1;
+            loadList(1, document.getElementById('keyword').value.trim());
         }
-    }
 
-    // 搜索框回车搜索
-    document.getElementById('keyword').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') search();
-    });
+        async function handleAutoLogin() {
+            const token = getToken();
+            if (!token || isTokenExpired(token)) { clearToken(); window.location.href = '/login.html?expired=1'; return; }
+            const res = await get('/api/auth/verify');
+            if (res.code !== 200) { clearToken(); window.location.href = '/login.html?expired=1'; }
+        }
 
-    // ========== 页面初始化 ==========
-    (async function() {
-        await handleAutoLogin();
-        loadList(1, '');
-    })();
-</script>
+        document.getElementById('keyword').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') search();
+        });
+
+        (async function() {
+            await handleAutoLogin();
+            loadList(1, '');
+        })();
+    </script>
 </body>
 </html>

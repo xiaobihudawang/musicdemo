@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>排行榜</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-    <h2 style="margin-bottom: 20px;">本周排行榜</h2>
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
 
-    <!-- 排行榜 Tab 切换 -->
+    <div class="page-header">
+        <h1>排行榜</h1>
+        <div class="meta">本周热门排行</div>
+    </div>
+
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('likes', this)">👍 点赞排行</button>
-        <button class="tab-btn" onclick="switchTab('downloads', this)">⬇️ 下载排行</button>
+        <button class="tab-btn active" onclick="switchTab('likes', this)">♥ 点赞排行</button>
+        <button class="tab-btn" onclick="switchTab('downloads', this)">⬇ 下载排行</button>
         <button class="tab-btn" onclick="switchTab('comments', this)">💬 评论排行</button>
     </div>
 
@@ -24,10 +29,10 @@
             <div id="rankSkeleton">
                 <div class="skeleton skeleton-line"></div>
                 <div class="skeleton skeleton-line-sm"></div>
-                <div style="height:16px;"></div>
+                <div style="height:12px;"></div>
                 <div class="skeleton skeleton-line"></div>
                 <div class="skeleton skeleton-line-sm"></div>
-                <div style="height:16px;"></div>
+                <div style="height:12px;"></div>
                 <div class="skeleton skeleton-line"></div>
                 <div class="skeleton skeleton-line-sm"></div>
             </div>
@@ -39,7 +44,6 @@
     <script>
         let currentType = 'likes';
 
-        // 切换 Tab，重新加载排行
         function switchTab(type, btn) {
             currentType = type;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -47,31 +51,25 @@
             loadRanking();
         }
 
-        // ========== 加载排行数据 ==========
         async function loadRanking() {
             const res = await get('/api/ranking/' + currentType);
             if (res.code !== 200) return;
-
             document.getElementById('rankSkeleton').classList.add('hidden');
             const list = res.data;
             if (!list || list.length === 0) {
-                document.getElementById('rankList').innerHTML =
-                    '<div class="tip">本周暂无排行数据</div>';
+                document.getElementById('rankList').innerHTML = '<div class="tip">本周暂无排行数据</div>';
                 return;
             }
-
             document.getElementById('rankList').innerHTML = list.map((item, index) => {
                 const rankClass = index < 3 ? 'top3' : '';
                 return `
                     <div class="rank-item ${rankClass}">
                         <div class="rank-num">${index + 1}</div>
                         <div style="flex:1;">
-                            <div><a href="/detail.html?id=${item.id}"><strong>${escapeHtml(item.title)}</strong></a></div>
-                            <div style="color:#999;font-size:13px;">
-                                ${escapeHtml(item.artist)} |
-                                ❤️ ${item.likeCount} |
-                                💬 ${item.commentCount} |
-                                ⬇️ ${item.downloadCount}
+                            <div><a href="/detail.html?id=${item.id}"><strong style="font-family:'Syne',sans-serif;">${escapeHtml(item.title)}</strong></a></div>
+                            <div style="color:var(--text-muted);font-size:13px;font-style:italic;">
+                                ${escapeHtml(item.artist)} &mdash;
+                                ♥ ${item.likeCount} &nbsp;💬 ${item.commentCount} &nbsp;⬇ ${item.downloadCount}
                             </div>
                         </div>
                     </div>

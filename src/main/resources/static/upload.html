@@ -4,64 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>上传音乐</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-    <div class="upload-container">
-        <h2 style="margin-bottom: 20px;">上传音乐</h2>
-        <!-- 上传表单 -->
-        <div class="card">
-            <!-- 歌曲标题 -->
-            <div class="form-group">
-                <label>歌曲标题 *</label>
-                <input type="text" id="title" placeholder="请输入歌曲标题">
-            </div>
-            <!-- 歌手 -->
-            <div class="form-group">
-                <label>歌手 *</label>
-                <input type="text" id="artist" placeholder="请输入歌手名">
-            </div>
-            <!-- 简介（选填） -->
-            <div class="form-group">
-                <label>简介</label>
-                <div style="display:flex;gap:8px;">
-                    <textarea id="description" placeholder="这首歌的介绍（可选）" rows="3" style="flex:1;"></textarea>
-                    <button class="btn btn-default btn-sm" onclick="generateDescription()" style="white-space:nowrap;align-self:flex-end;" id="aiDescBtn">🤖 AI 生成</button>
-                </div>
-            </div>
-            <!-- 文件上传 -->
-            <div class="form-group">
-                <label>音乐文件 *（支持 MP3/FLAC/WAV/AAC/OGG/M4A/MP4，最大 50MB）</label>
-                <div class="file-upload" onclick="document.getElementById('file').click()">
-                    <input type="file" id="file" accept=".mp3,.flac,.wav,.aac,.ogg,.m4a,.mp4" hidden>
-                    <div class="file-upload-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7A9E7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </div>
-                    <p class="file-upload-text" id="fileText">点击选择音乐文件</p>
-                    <p class="file-upload-hint">MP3 / FLAC / WAV / AAC / OGG / M4A / MP4</p>
-                </div>
-                <p id="fileInfo" style="color: #8AA08A; font-size: 13px; margin-top: 8px;"></p>
-            </div>
-            <button class="btn btn-primary" onclick="doUpload()">上传</button>
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
+
+    <div class="page-header">
+        <h1>上传音乐</h1>
+        <div class="meta">UPLOAD</div>
+    </div>
+
+    <div class="card" style="max-width:600px;">
+        <div class="form-group">
+            <label>歌曲标题 *</label>
+            <input type="text" id="title" placeholder="请输入歌曲标题">
         </div>
+        <div class="form-group">
+            <label>歌手 *</label>
+            <input type="text" id="artist" placeholder="请输入歌手名">
+        </div>
+        <div class="form-group">
+            <label>简介</label>
+            <div style="display:flex;gap:8px;">
+                <textarea id="description" placeholder="这首歌的介绍（可选）" rows="3" style="flex:1;"></textarea>
+                <button class="btn btn-default btn-sm" onclick="generateDescription()" style="white-space:nowrap;align-self:flex-end;" id="aiDescBtn">🤖 AI 生成</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>音乐文件 *（MP3/FLAC/WAV/AAC/OGG/M4A/MP4，最大 50MB）</label>
+            <div class="file-upload" onclick="document.getElementById('file').click()">
+                <input type="file" id="file" accept=".mp3,.flac,.wav,.aac,.ogg,.m4a,.mp4" hidden>
+                <div class="file-upload-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p class="file-upload-text" id="fileText">点击选择音乐文件</p>
+                <p class="file-upload-hint">MP3 / FLAC / WAV / AAC / OGG / M4A / MP4</p>
+            </div>
+            <p class="file-info" id="fileInfo"></p>
+        </div>
+        <button class="btn btn-primary" onclick="doUpload()">上传</button>
     </div>
 
     <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
     <script>
-        if (!isLogined()) {
-            showToast('请先登录', 'error');
-            setTimeout(() => { window.location.href = '/login.html'; }, 1000);
-        }
+        if (!isLogined()) { showToast('请先登录', 'error'); setTimeout(() => { window.location.href = '/login.html'; }, 1000); }
 
-        // 文件选择后更新 UI
         document.getElementById('file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -71,91 +67,42 @@
             }
         });
 
-        // ========== AI 生成简介 ==========
         async function generateDescription() {
             const title = document.getElementById('title').value.trim();
             const artist = document.getElementById('artist').value.trim();
             if (!title) { showToast('请先填写歌曲标题', 'error'); return; }
-
             const btn = document.getElementById('aiDescBtn');
-            btn.disabled = true;
-            btn.textContent = '🤖 生成中...';
-
+            btn.disabled = true; btn.textContent = '🤖 生成中...';
             const res = await post('/api/ai/description', { title, artist });
-            if (res.code === 200) {
-                document.getElementById('description').value = res.data.description;
-                showToast('简介生成成功', 'success');
-            } else {
-                showToast(res.message || '生成失败', 'error');
-            }
-
-            btn.disabled = false;
-            btn.textContent = '🤖 AI 生成';
+            if (res.code === 200) { document.getElementById('description').value = res.data.description; showToast('简介生成成功', 'success'); }
+            else { showToast(res.message || '生成失败', 'error'); }
+            btn.disabled = false; btn.textContent = '🤖 AI 生成';
         }
 
-        // ========== 上传逻辑 ==========
         async function doUpload() {
-            // 收集表单数据
             const title = document.getElementById('title').value.trim();
             const artist = document.getElementById('artist').value.trim();
             const description = document.getElementById('description').value.trim();
             const fileInput = document.getElementById('file');
             const file = fileInput.files[0];
-
-            // 校验必填字段
-            if (!title || !artist) {
-                showToast('请填写标题和歌手', 'error');
-                return;
-            }
-            // 校验文件
-            if (!file) {
-                showToast('请选择音乐文件', 'error');
-                return;
-            }
-            // 校验格式
+            if (!title || !artist) { showToast('请填写标题和歌手', 'error'); return; }
+            if (!file) { showToast('请选择音乐文件', 'error'); return; }
             const allowedExts = ['.mp3', '.flac', '.wav', '.aac', '.ogg', '.m4a', '.mp4'];
             const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-            if (!allowedExts.includes(ext)) {
-                showToast('仅支持 MP3/FLAC/WAV/AAC/OGG/M4A/MP4 格式', 'error');
-                return;
-            }
-            // 校验大小
-            if (file.size > 50 * 1024 * 1024) {
-                showToast('文件大小不能超过 50MB', 'error');
-                return;
-            }
-
-            // 构建 FormData
+            if (!allowedExts.includes(ext)) { showToast('仅支持 MP3/FLAC/WAV/AAC/OGG/M4A/MP4 格式', 'error'); return; }
+            if (file.size > 50 * 1024 * 1024) { showToast('文件大小不能超过 50MB', 'error'); return; }
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('title', title);
-            formData.append('artist', artist);
-            formData.append('description', description || '');
-
-            // 发起上传请求（手动使用 fetch 以支持 FormData）
+            formData.append('file', file); formData.append('title', title);
+            formData.append('artist', artist); formData.append('description', description || '');
             const token = getToken();
             try {
                 const response = await fetch('/api/music/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: formData
+                    method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData
                 });
                 const res = await response.json();
-
-                // 处理上传结果
-                if (res.code === 200) {
-                    showToast('上传成功', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/detail.html?id=' + res.data.id;
-                    }, 800);
-                } else {
-                    showToast(res.message, 'error');
-                }
-            } catch (error) {
-                showToast('上传失败，请稍后重试', 'error');
-            }
+                if (res.code === 200) { showToast('上传成功', 'success'); setTimeout(() => { window.location.href = '/detail.html?id=' + res.data.id; }, 800); }
+                else { showToast(res.message, 'error'); }
+            } catch (error) { showToast('上传失败，请稍后重试', 'error'); }
         }
     </script>
 </body>

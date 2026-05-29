@@ -2,16 +2,58 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- MusicMapper：音乐数据访问接口，提供歌曲的增删查改及统计功能 -->
+<!--
+  ========================================================================
+  MusicMapper.xml —— 音乐模块数据访问层映射文件
+
+  对应 Java 接口：org.example.musicdemo.mapper.MusicMapper
+  数据库表：music（歌曲主表）
+  关联表：user（用户表，用于关联查询上传者用户名）、
+          like_record（点赞记录表，用于排行榜）、
+          download_record（下载记录表，用于排行榜）、
+          comment（评论表，用于排行榜）
+
+  核心功能：
+    1. 歌曲 CRUD（增删查）
+    2. 分页 + 关键字模糊搜索
+    3. 点赞数 / 评论数 / 下载数的原子性增减
+    4. 本周三大排行榜 TOP10（点赞榜、下载榜、评论榜）
+  ========================================================================
+-->
+
 <mapper namespace="org.example.musicdemo.mapper.MusicMapper">
 
-    <!-- 歌曲结果映射：关联用户表查询时使用 -->
+    <!--
+      resultMap "musicMap"：歌曲完整结果映射
+
+      映射了 music 表的所有字段 + left join user 表额外查询的 username 字段
+
+      字段映射详解：
+        id              → id              （主键）
+        title           → title           （歌曲标题）
+        artist          → artist          （歌手/艺术家）
+        description     → description     （歌曲描述/简介）
+        file_path       → filePath        （音频文件存储路径）
+        file_size       → fileSize        （文件大小，单位字节）
+        like_count      → likeCount       （点赞数，反规范化冗余字段）
+        comment_count   → commentCount    （评论数，反规范化冗余字段）
+        download_count  → downloadCount   （下载数，反规范化冗余字段）
+        user_id         → userId          （上传者用户 ID）
+        create_time     → createTime      （上传时间）
+        username        → username        （上传者用户名，来自 LEFT JOIN user 表）
+
+      反规范化说明：
+        like_count、comment_count、download_count 是冗余计数，
+        专门从统计表中同步而来，目的是避免每次展示列表时都要 COUNT(*)，
+        以空间换时间，提升查询性能
+    -->
     <resultMap id="musicMap" type="org.example.musicdemo.entity.Music">
         <id property="id" column="id"/>
         <result property="title" column="title"/>
         <result property="artist" column="artist"/>
         <result property="description" column="description"/>
         <result property="filePath" column="file_path"/>
+        <result property="coverPath" column="cover_path"/>
         <result property="fileSize" column="file_size"/>
         <result property="likeCount" column="like_count"/>
         <result property="commentCount" column="comment_count"/>
@@ -21,7 +63,28 @@
         <result property="username" column="username"/>
     </resultMap>
 
-    <!-- 分页 + 关键字模糊查询歌曲列表（支持 title/artist 搜索） -->
+    <!--
+      ====================== 分页 + 模糊查询 ======================
+    -->
+
+    <!--
+      findList：分页查询歌曲列表（含关键字模糊搜索）
+
+      业务逻辑：
+        1. LEFT JOIN user 表获取上传者用户名
+        2. 如果 keyword 不为空，在 title 和 artist 两个字段上做 LIKE 模糊匹配
+        3. 按创建时间倒序排列（最新的歌曲在最前面）
+        4. 使用 LIMIT offset, size 实现分页
+
+      参数：
+        #{keyword} — 搜索关键字（String），可选；支持按歌名或歌手名搜索
+        #{offset}  — 分页偏移量（int），计算公式：(pageNum - 1) * pageSize
+        #{size}    — 每页条数（int）
+
+      注意：
+        LIKE CONCAT('%', #{keyword}, '%') 写法可以防止 SQL 注入，
+        比直接在 Java 代码中拼接 % 更安全（MyBatis 会预编译参数）
+    -->
     <select id="findList" resultMap="musicMap">
         SELECT m.*, u.username
         FROM music m
@@ -36,7 +99,18 @@
         LIMIT #{offset}, #{size}
     </select>
 
-    <!-- 根据关键字统计歌曲总数（用于分页） -->
+    <!--
+      countList：统计符合条件的歌曲总数（用于分页器总页数计算）
+
+      与 findList 共用相同的 WHERE 条件（关键字搜索条件一致），
+      只是 SELECT 子句从查询具体字段改为 COUNT(*) 聚合
+
+      参数：
+        #{keyword} — 搜索关键字（String），可选
+
+      返回值：
+        int — 符合条件的总记录数
+    -->
     <select id="countList" resultType="int">
         SELECT COUNT(*) FROM music
         <where>
@@ -47,7 +121,19 @@
         </where>
     </select>
 
-    <!-- 根据 ID 查询单首歌曲详情 -->
+    <!--
+      ====================== 单条查询 ======================
+    -->
+
+    <!--
+      findById：根据 ID 查询歌曲详情（含上传者用户名）
+
+      参数：
+        #{id} — 歌曲 ID（Integer）
+
+      用途：
+        歌曲详情页展示时调用
+    -->
     <select id="findById" resultMap="musicMap">
         SELECT m.*, u.username
         FROM music m
@@ -55,65 +141,180 @@
         WHERE m.id = #{id}
     </select>
 
-    <!-- 新增歌曲记录（自动回填自增 ID） -->
+    <!--
+      ====================== 新增 / 删除 ======================
+    -->
+
+    <!--
+      insert：新增歌曲记录
+
+      useGeneratedKeys="true" + keyProperty="id"：
+        插入后自动将数据库生成的自增主键回填到 Music 对象的 id 属性中，
+        方便后续业务逻辑使用（如返回新歌曲 ID 给前端）
+
+      参数：
+        #{title}         — 歌曲标题
+        #{artist}        — 歌手
+        #{description}   — 描述
+        #{filePath}      — 文件存储路径
+        #{fileSize}      — 文件大小
+        #{likeCount}     — 初始点赞数（通常为 0）
+        #{commentCount}  — 初始评论数（通常为 0）
+        #{downloadCount} — 初始下载数（通常为 0）
+        #{userId}        — 上传者用户 ID
+    -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.Music" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO music (title, artist, description, file_path, file_size, like_count, comment_count, download_count, user_id)
-        VALUES (#{title}, #{artist}, #{description}, #{filePath}, #{fileSize}, #{likeCount}, #{commentCount}, #{downloadCount}, #{userId})
+        INSERT INTO music (title, artist, description, file_path, cover_path, file_size, like_count, comment_count, download_count, user_id)
+        VALUES (#{title}, #{artist}, #{description}, #{filePath}, #{coverPath}, #{fileSize}, #{likeCount}, #{commentCount}, #{downloadCount}, #{userId})
     </insert>
 
-    <!-- 根据 ID 删除歌曲 -->
+    <!--
+      deleteById：根据 ID 删除歌曲
+
+      业务说明：
+        删除歌曲前应同时清理关联数据：
+          - 删除 comment 表中该歌曲的所有评论
+          - 删除 like_record 表中该歌曲的所有点赞记录
+          - 删除 download_record 表中该歌曲的所有下载记录
+          - （可选）删除服务器上对应的音频文件
+        建议在 Service 层使用 @Transactional 保证清理操作的原子性
+
+      参数：
+        #{id} — 要删除的歌曲 ID
+    -->
     <delete id="deleteById">
         DELETE FROM music WHERE id = #{id}
     </delete>
 
-    <!-- 更新点赞数（delta 为 +1 或 -1） -->
+    <!--
+      ====================== 计数器更新（原子操作） ======================
+    -->
+
+    <!--
+      updateLikeCount：原子更新点赞数
+
+      使用 like_count = like_count + #{delta} 的原地更新方式，
+      避免"先查后改"带来的并发安全问题（丢失更新问题）。
+      delta 传 +1 表示点赞，传 -1 表示取消点赞。
+      底层利用了 MySQL 行锁保证并发安全。
+
+      参数：
+        #{id}    — 歌曲 ID
+        #{delta} — 变化量（int），+1 或 -1
+
+      注意：取消点赞时，Service 层应校验 like_count > 0 后再执行 -1 操作，
+            防止点赞数变成负数
+    -->
     <update id="updateLikeCount">
         UPDATE music SET like_count = like_count + #{delta} WHERE id = #{id}
     </update>
 
-    <!-- 更新评论数（delta 为 +1 或 -1） -->
+    <!--
+      updateCommentCount：原子更新评论数
+
+      与 updateLikeCount 同理，delta = +1 表示新增评论，-1 表示删除评论
+
+      参数：
+        #{id}    — 歌曲 ID
+        #{delta} — 变化量（int），+1 或 -1
+    -->
     <update id="updateCommentCount">
         UPDATE music SET comment_count = comment_count + #{delta} WHERE id = #{id}
     </update>
 
-    <!-- 下载次数 +1 -->
+    <!--
+      updateDownloadCount：下载次数 +1
+
+      下载只增不减（不提供"取消下载"功能），所以直接 +1，不需要 delta 参数
+
+      参数：
+        #{id} — 被下载的歌曲 ID
+    -->
     <update id="updateDownloadCount">
         UPDATE music SET download_count = download_count + 1 WHERE id = #{id}
     </update>
 
-    <!-- 本周点赞排行 TOP10 -->
+    <update id="updateCoverPath">
+        UPDATE music SET cover_path = #{coverPath} WHERE id = #{id}
+    </update>
+
+    <!--
+      ====================== 本周排行榜 TOP10 ======================
+
+      三个排行榜的查询结构高度相似：
+      1. 从各自的记录表（like_record / download_record / comment）中筛选本周数据
+      2. 通过 JOIN 关联 music 表和 user 表获取歌曲信息和上传者用户名
+      3. GROUP BY music_id 按歌曲分组
+      4. ORDER BY COUNT(*) DESC 按活动次数降序排列
+      5. LIMIT 10 截取前 10 名
+
+      时间范围参数：
+        #{start} — 本周起始时间（LocalDateTime）
+        #{end}   — 本周结束时间（LocalDateTime）
+    -->
+
+    <!--
+      findWeeklyLikeTop10：本周点赞排行 TOP10
+
+      统计逻辑：
+        从 like_record 表中统计本周内每首歌获得的点赞数，
+        按点赞数降序排列取前 10。
+
+      业务说明：
+        点赞数越高说明歌曲越受欢迎，此排行榜用于"热门推荐"等场景。
+    -->
     <select id="findWeeklyLikeTop10" resultMap="musicMap">
         SELECT m.*, u.username
-        FROM like_record lr
-        JOIN music m ON lr.music_id = m.id
-        JOIN `user` u ON m.user_id = u.id
-        WHERE lr.create_time BETWEEN #{start} AND #{end}
-        GROUP BY lr.music_id
-        ORDER BY COUNT(lr.id) DESC
-        LIMIT 10
+        FROM like_record lr                               -- 从点赞记录表开始
+        JOIN music m ON lr.music_id = m.id               -- 关联歌曲表获取歌曲信息
+        JOIN `user` u ON m.user_id = u.id                -- 关联用户表获取上传者用户名
+        WHERE lr.create_time BETWEEN #{start} AND #{end} -- 只统计本周数据
+        GROUP BY lr.music_id                             -- 按歌曲分组
+        ORDER BY COUNT(lr.id) DESC                       -- 按该歌曲获得的点赞数排序
+        LIMIT 10                                          -- 取前 10 名
     </select>
 
-    <!-- 本周下载排行 TOP10 -->
+    <!--
+      findWeeklyDownloadTop10：本周下载排行 TOP10
+
+      统计逻辑：
+        从 download_record 表中统计本周内每首歌的下载次数，
+        按下载量降序排列取前 10。
+
+      业务说明：
+        下载量反映歌曲的实际消费热度，与点赞榜互为补充。
+    -->
     <select id="findWeeklyDownloadTop10" resultMap="musicMap">
         SELECT m.*, u.username
-        FROM download_record dr
-        JOIN music m ON dr.music_id = m.id
-        JOIN `user` u ON m.user_id = u.id
-        WHERE dr.create_time BETWEEN #{start} AND #{end}
-        GROUP BY dr.music_id
-        ORDER BY COUNT(dr.id) DESC
-        LIMIT 10
+        FROM download_record dr                             -- 从下载记录表开始
+        JOIN music m ON dr.music_id = m.id                 -- 关联歌曲表
+        JOIN `user` u ON m.user_id = u.id                  -- 关联用户表
+        WHERE dr.create_time BETWEEN #{start} AND #{end}   -- 本周数据
+        GROUP BY dr.music_id                                -- 按歌曲分组
+        ORDER BY COUNT(dr.id) DESC                         -- 按下载量排序
+        LIMIT 10                                            -- 取前 10
     </select>
 
-    <!-- 本周评论排行 TOP10 -->
+    <!--
+      findWeeklyCommentTop10：本周评论排行 TOP10
+
+      统计逻辑：
+        从 comment 表中统计本周内每首歌收到的评论数，
+        按评论活跃度降序排列取前 10。
+
+      业务说明：
+        评论量反映歌曲的讨论热度和社区活跃度，
+        评论多说明歌曲引发了听众的情感共鸣或话题讨论。
+    -->
     <select id="findWeeklyCommentTop10" resultMap="musicMap">
         SELECT m.*, u.username
-        FROM comment c
-        JOIN music m ON c.music_id = m.id
-        JOIN `user` u ON m.user_id = u.id
-        WHERE c.create_time BETWEEN #{start} AND #{end}
-        GROUP BY c.music_id
-        ORDER BY COUNT(c.id) DESC
-        LIMIT 10
+        FROM comment c                                      -- 从评论表开始
+        JOIN music m ON c.music_id = m.id                  -- 关联歌曲表
+        JOIN `user` u ON m.user_id = u.id                   -- 关联用户表
+        WHERE c.create_time BETWEEN #{start} AND #{end}    -- 本周数据
+        GROUP BY c.music_id                                 -- 按歌曲分组
+        ORDER BY COUNT(c.id) DESC                          -- 按评论量排序
+        LIMIT 10                                            -- 取前 10
     </select>
+
 </mapper>

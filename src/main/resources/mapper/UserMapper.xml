@@ -2,10 +2,45 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- namespace 必须和接口全路径一致 -->
+<!--
+  ========================================================================
+  UserMapper.xml —— 用户模块数据访问层映射文件
+
+  对应 Java 接口：org.example.musicdemo.mapper.UserMapper
+  数据库表：user（用户表）
+
+  业务说明：
+    用户表存储了用户的核心信息，包括：
+      - 身份认证：username（唯一登录名）、password（BCrypt 加密的密码）
+      - 个人信息：name（显示昵称）、email（邮箱）
+      - 权限控制：role（角色：ROLE_USER / ROLE_ADMIN）、enabled（账号是否启用）
+      - 时间记录：create_time（注册时间）
+
+    注意：表名 `user` 是 MySQL 保留字，因此在所有 SQL 中使用了反引号转义：`user`
+  ========================================================================
+-->
+
 <mapper namespace="org.example.musicdemo.mapper.UserMapper">
 
-    <!-- 结果映射：告诉 MyBatis 如何把查询结果映射到 User 对象 -->
+    <!--
+      resultMap "userMap"：用户结果映射规则
+
+      将数据库的 snake_case 列名转换为 Java 的 camelCase 属性名。
+
+      各字段说明：
+        id          → id          （主键，自增 ID）
+        username    → username    （登录用户名，唯一索引列）
+        password    → password    （经过 BCrypt 加密的密码哈希值）
+        name        → name        （用户昵称，用于前端展示）
+        email       → email       （电子邮箱）
+        role        → role        （角色：ROLE_USER 普通用户 / ROLE_ADMIN 管理员）
+        enabled     → enabled     （启用状态：1=启用 0=禁用）
+        create_time → createTime  （注册时间）
+
+      Spring Security 集成说明：
+        role 字段被用于 GrantedAuthority 的构建，前缀 "ROLE_" 是 Spring Security 的规范，
+        如数据库中存储 "ADMIN"，代码中拼接为 "ROLE_ADMIN"
+    -->
     <resultMap id="userMap" type="org.example.musicdemo.entity.User">
         <id property="id" column="id"/>
         <result property="username" column="username"/>
@@ -17,29 +52,101 @@
         <result property="createTime" column="create_time"/>
     </resultMap>
 
-    <!-- 根据用户名查询 -->
+    <!--
+      findByUsername：根据用户名查询用户信息
+
+      业务用途：
+        登录认证的核心方法。在 AuthService 中：
+          1. 调用此方法根据用户名查找用户
+          2. 如果找不到，抛出"用户名不存在"异常
+          3. 如果找到，用 BCryptPasswordEncoder.matches() 比对密码明文和哈希值
+          4. 比对成功则生成 JWT Token 返回
+
+      参数：
+        #{username} — 登录用户名（String），传入的 username 是用户输入的值
+
+      性能说明：
+        username 字段有唯一索引，该查询走索引，性能最优
+
+      返回值：
+        User — 如果用户名存在
+        null — 如果用户名不存在
+    -->
     <select id="findByUsername" resultMap="userMap">
         SELECT * FROM `user` WHERE username = #{username}
     </select>
 
-    <!-- 根据 ID 查询 -->
+    <!--
+      findById：根据用户 ID 查询用户信息
+
+      业务用途：
+        获取用户详情、权限校验等场景
+
+      参数：
+        #{id} — 用户 ID（Integer）
+
+      注意：
+        id 是主键列，该查询使用主键索引，效率极高
+    -->
     <select id="findById" resultMap="userMap">
         SELECT * FROM `user` WHERE id = #{id}
     </select>
 
-    <!-- 插入用户，useGeneratedKeys 表示获取数据库自增的主键 -->
+    <!--
+      findAll：查询所有用户（按注册时间倒序）
+
+      业务用途：
+        管理员后台的用户管理列表，展示所有注册用户
+
+      SQL 说明：
+        ORDER BY create_time DESC 让新注册的用户显示在前面
+
+      返回值：
+        List<User> — 用户列表
+    -->
+    <select id="findAll" resultMap="userMap">
+        SELECT * FROM `user` ORDER BY create_time DESC
+    </select>
+
+    <!--
+      insert：新增用户（注册）
+
+      关键属性：
+        useGeneratedKeys="true"   — 获取数据库自动生成的主键 ID
+        keyProperty="id"          — 将自增 ID 回填到 User 对象的 id 属性中
+                                   （注册成功后可直接获取用户 ID，用于后续业务）
+
+      参数说明：
+        #{username} — 用户名（唯一，不能重复）
+        #{password} — BCrypt 加密后的密码哈希值（Service 层加密后传入，不存明文）
+        #{name}     — 用户昵称
+        #{email}    — 电子邮箱
+        #{role}     — 角色，新注册用户默认为 "USER"
+        #{enabled}  — 启用状态，新注册用户默认为 1（启用）
+
+      异常情况：
+        如果 username 已存在，数据库的唯一索引会抛出 DuplicateKeyException，
+        应在 Service 层捕获并返回"用户名已存在"的错误提示
+    -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `user` (username, password, name, email, role, enabled)
         VALUES (#{username}, #{password}, #{name}, #{email}, #{role}, #{enabled})
     </insert>
 
-    <!-- 查询所有用户 -->
-    <select id="findAll" resultMap="userMap">
-        SELECT * FROM `user` ORDER BY create_time DESC
-    </select>
+    <!--
+      updateEnabled：更新用户的启用/禁用状态
 
-    <!-- 更新启用状态 -->
+      业务用途：
+        管理员后台管理用户时，可以禁用某个用户。
+        禁用的用户无法登录系统，即使密码正确也会被 Spring Security 的
+        UserDetails.isEnabled() 拦截。
+
+      参数：
+        #{id}      — 要修改的用户 ID（Integer）
+        #{enabled} — 新状态：1=启用，0=禁用（Integer）
+    -->
     <update id="updateEnabled">
         UPDATE `user` SET enabled = #{enabled} WHERE id = #{id}
     </update>
+
 </mapper>

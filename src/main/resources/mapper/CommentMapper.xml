@@ -2,10 +2,31 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- CommentMapper：评论数据访问接口，提供评论的查询、新增和删除功能 -->
+<!--
+  ========================================================================
+  CommentMapper.xml —— 评论模块数据访问层映射文件
+
+  对应 Java 接口：org.example.musicdemo.mapper.CommentMapper
+  数据库表：comment（评论表）
+  关联表：user（用户表，通过 LEFT JOIN 关联查询用户名）
+  ========================================================================
+-->
+
 <mapper namespace="org.example.musicdemo.mapper.CommentMapper">
 
-    <!-- 评论结果映射：关联用户表查询时使用 -->
+    <!--
+      resultMap "commentMap"：自定义结果映射规则
+      将 SQL 查询结果中的列名（snake_case）映射到 Comment 实体类的属性名（camelCase）
+      同时处理 LEFT JOIN user 表后额外查询的 username 字段
+
+      字段映射详解：
+        id          → id          （主键，使用 <id> 标签标记）
+        content     → content     （评论内容）
+        user_id     → userId      （评论者用户 ID，外键）
+        music_id    → musicId     （被评论的歌曲 ID，外键）
+        create_time → createTime  （评论时间）
+        username    → username    （关联查询的用户名，非 comment 表字段，通过 LEFT JOIN 获取）
+    -->
     <resultMap id="commentMap" type="org.example.musicdemo.entity.Comment">
         <id property="id" column="id"/>
         <result property="content" column="content"/>
@@ -15,7 +36,21 @@
         <result property="username" column="username"/>
     </resultMap>
 
-    <!-- 根据歌曲 ID 查询评论列表（按时间倒序） -->
+    <!--
+      findByMusicId：根据歌曲 ID 查询评论列表
+
+      业务逻辑：
+        查询指定歌曲的所有评论，按时间倒序排列（最新评论在前）
+        通过 LEFT JOIN user 表获取评论者的用户名，
+        前端展示评论时直接显示用户名，无需额外查表
+
+      参数：
+        #{musicId} — 歌曲 ID（Integer 类型）
+
+      SQL 说明：
+        LEFT JOIN 确保即使 user 记录被删除（通常不会），评论本身仍然能返回
+        ORDER BY create_time DESC 实现"最新的评论排在最上面"
+    -->
     <select id="findByMusicId" resultMap="commentMap">
         SELECT c.*, u.username
         FROM comment c
@@ -24,20 +59,59 @@
         ORDER BY c.create_time DESC
     </select>
 
-    <!-- 根据评论 ID 查询单条评论 -->
+    <!--
+      findById：根据评论 ID 查询单条评论
+
+      用途：
+        用于评论编辑、删除前的数据校验，或获取单条评论详情
+
+      参数：
+        #{id} — 评论 ID（Integer 类型）
+
+      同样 LEFT JOIN user 表，确保返回数据包含用户名
+    -->
     <select id="findById" resultMap="commentMap">
         SELECT c.*, u.username FROM comment c
         LEFT JOIN `user` u ON c.user_id = u.id
         WHERE c.id = #{id}
     </select>
 
-    <!-- 新增评论（自动回填自增 ID） -->
+    <!--
+      insert：新增评论记录
+
+      关键属性：
+        useGeneratedKeys="true"   — 启用 JDBC 自动生成主键回填机制
+        keyProperty="id"          — 将自动生成的自增 ID 赋值给 Comment 对象的 id 属性
+                                   （调用 insert 后可直接通过 comment.getId() 获取新 ID）
+
+      参数：
+        #{content}  — 评论内容（String）
+        #{userId}   — 发布评论的用户 ID（Integer）
+        #{musicId}  — 被评论的歌曲 ID（Integer）
+
+      注意：create_time 字段使用数据库默认值（CURRENT_TIMESTAMP），无需传入
+    -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.Comment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO comment (content, user_id, music_id) VALUES (#{content}, #{userId}, #{musicId})
     </insert>
 
-    <!-- 根据 ID 删除评论 -->
+    <!--
+      deleteById：根据 ID 删除评论
+
+      业务说明：
+        删除评论前应在 Service 层做权限校验：
+          - 评论作者可以删除自己的评论
+          - 管理员可以删除任何评论
+
+      参数：
+        #{id} — 要删除的评论 ID（Integer 类型）
+    -->
     <delete id="deleteById">
         DELETE FROM comment WHERE id = #{id}
     </delete>
+
+    <delete id="deleteByMusicId">
+        DELETE FROM comment WHERE music_id = #{musicId}
+    </delete>
+
 </mapper>

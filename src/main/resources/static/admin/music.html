@@ -1,17 +1,36 @@
 <!DOCTYPE html>
+<!-- ============================================================
+     页面：后台音乐管理（管理员专用）
+     以表格形式展示所有音乐及其统计数据，支持按 ID、标题、
+     歌手、上传者、点赞/评论/下载数和创建时间查看。
+     管理员可直接在列表中删除音乐。
+     非管理员用户访问时会显示"无权访问"并跳回首页。
+     ============================================================ -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>音乐管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <img src="/video/logo.png" alt="Loading">
-</div>
-    <h2 style="margin-bottom: 20px;">音乐管理</h2>
-    <!-- 音乐管理表格 -->
+    <!-- ========== 全屏加载遮罩 ========== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <img src="/video/logo.png" alt="Loading">
+    </div>
+
+    <!-- ========== 页面标题 ========== -->
+    <div class="page-header">
+        <h1>音乐管理</h1>
+        <div class="meta">ADMIN / MUSIC</div>
+    </div>
+
+    <!-- ========== 音乐管理表格 ==========
+         使用 card 包裹的 table.table 组件
+         表头：ID、标题、歌手、上传者、点赞、评论、下载、创建时间、操作
+         数据由 loadMusic() 动态加载渲染 -->
     <div class="card">
         <table class="table">
             <thead>
@@ -28,6 +47,7 @@
                 </tr>
             </thead>
             <tbody id="musicTable">
+                <!-- 骨架屏：数据加载前的占位 -->
                 <tr id="musicTableSkeleton"><td colspan="9"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line-sm"></div><div style="height:8px;"></div><div class="skeleton skeleton-line"></div></td></tr>
             </tbody>
         </table>
@@ -36,22 +56,35 @@
     <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
     <script>
+        // ============================================================
         // 权限校验：非管理员不可访问
+        // 前端通过 getUserRole() 获取 localStorage 中存储的角色
+        // 如果角色不是 'admin'，显示错误提示并跳回首页
+        // 注意：后端也会通过 Spring Security @PreAuthorize 做二次校验
+        // ============================================================
         if (getUserRole() !== 'admin') {
             showToast('无权访问', 'error');
             setTimeout(() => { window.location.href = '/'; }, 1000);
         }
 
-        // ========== 加载音乐列表 ==========
+        // ============================================================
+        // loadMusic —— 加载所有音乐列表
+        // 调用 GET /api/music/list?page=1&size=100
+        // 使用较大的 size=100 以获取全量数据（管理员查看全部）
+        // 渲染为表格行，每行包含一个"删除"按钮
+        // ============================================================
         async function loadMusic() {
             const res = await get('/api/music/list?page=1&size=100');
             if (res.code !== 200) return;
 
+            // 隐藏骨架屏
             document.getElementById('musicTableSkeleton').classList.add('hidden');
+
             const list = res.data.list;
             document.getElementById('musicTable').innerHTML = list.map(m => `
                 <tr>
                     <td>${m.id}</td>
+                    <!-- 标题可点击跳转到详情页 -->
                     <td><a href="/detail.html?id=${m.id}">${escapeHtml(m.title)}</a></td>
                     <td>${escapeHtml(m.artist)}</td>
                     <td>${escapeHtml(m.username)}</td>
@@ -60,24 +93,34 @@
                     <td>${m.downloadCount}</td>
                     <td>${formatDate(m.createTime)}</td>
                     <td>
+                        <!-- 删除按钮：调用 deleteMusic(id) -->
                         <button class="btn btn-danger btn-sm" onclick="deleteMusic(${m.id})">删除</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // ========== 删除音乐 ==========
+        // ============================================================
+        // deleteMusic —— 管理员删除音乐
+        // 调用 DELETE /api/admin/music/{id}
+        // 注意：使用 /api/admin/music/{id} 路径，需要 ROLE_ADMIN 权限
+        // 删除前弹出 confirm 确认框
+        // 删除成功后重新加载表格
+        // ============================================================
         async function deleteMusic(id) {
             if (!confirm('确定删除这首音乐吗？删除后不可恢复！')) return;
             const res = await del('/api/admin/music/' + id);
             if (res.code === 200) {
                 showToast('删除成功', 'success');
-                loadMusic();
+                loadMusic();  // 刷新列表
             } else {
                 showToast(res.message, 'error');
             }
         }
 
+        // ============================================================
+        // 页面初始化：加载音乐列表
+        // ============================================================
         loadMusic();
     </script>
 </body>

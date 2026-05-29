@@ -2,10 +2,36 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- LikeRecordMapper：点赞记录数据访问接口，提供点赞记录的增删查功能 -->
+<!--
+  ========================================================================
+  LikeRecordMapper.xml —— 点赞记录模块数据访问层映射文件
+
+  对应 Java 接口：org.example.musicdemo.mapper.LikeRecordMapper
+  数据库表：like_record（点赞记录表）
+
+  业务说明：
+    点赞系统采用"记录表 + 计数器"的双写模式：
+      1. 点赞时：在 like_record 表插入一条记录 + 更新 music 表的 like_count 字段
+      2. 取消点赞时：从 like_record 表删除记录 + 更新 music 表的 like_count 字段
+    这种设计既可以实时显示点赞总数（直接从 music.like_count 读取，无需 COUNT），
+    又可以检查某个用户是否已点赞过某首歌（查 like_record 表）
+  ========================================================================
+-->
+
 <mapper namespace="org.example.musicdemo.mapper.LikeRecordMapper">
 
-    <!-- 点赞记录结果映射 -->
+    <!--
+      resultMap "likeRecordMap"：点赞记录结果映射规则
+
+      字段映射：
+        id          → id          （主键，自增 ID）
+        user_id     → userId      （点赞者用户 ID）
+        music_id    → musicId     （被点赞的歌曲 ID）
+        create_time → createTime  （点赞时间，数据库自动填充）
+
+      注意：联合唯一约束 (user_id, music_id) 保证了同一用户不能对同一首歌重复点赞，
+           此约束在数据库表结构层面实现
+    -->
     <resultMap id="likeRecordMap" type="org.example.musicdemo.entity.LikeRecord">
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
@@ -13,18 +39,68 @@
         <result property="createTime" column="create_time"/>
     </resultMap>
 
-    <!-- 新增点赞记录 -->
+    <!--
+      insert：新增点赞记录
+
+      业务触发时机：
+        用户点击"点赞"按钮时调用，同时需要在 Service 层调用
+        musicMapper.updateLikeCount(+1) 来增加点赞计数
+
+      参数：
+        #{userId}  — 当前登录用户的 ID
+        #{musicId} — 被点赞的歌曲 ID
+
+      注意：调用前应在 Service 层通过 findByUserAndMusic 校验用户是否已点赞，
+            若已点赞则不应再次插入，防止违反联合唯一约束而抛出数据库异常
+    -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.LikeRecord">
         INSERT INTO like_record (user_id, music_id) VALUES (#{userId}, #{musicId})
     </insert>
 
-    <!-- 取消点赞（根据用户 ID 和歌曲 ID 删除记录） -->
+    <!--
+      delete：取消点赞（删除记录）
+
+      业务触发时机：
+        用户点击"取消点赞"按钮时调用，同时需要在 Service 层调用
+        musicMapper.updateLikeCount(-1) 来减少点赞计数
+
+      参数：
+        #{userId}  — 当前登录用户的 ID
+        #{musicId} — 要取消点赞的歌曲 ID
+
+      WHERE 条件使用 user_id 和 music_id 联合定位：
+        因为联合唯一约束保证了 (user_id, music_id) 组合的唯一性，
+        所以最多只会删除一条记录，不会误删
+    -->
     <delete id="delete">
         DELETE FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
     </delete>
 
-    <!-- 查询用户是否已点赞某歌曲 -->
+    <!--
+      findByUserAndMusic：查询用户是否已点赞某歌曲
+
+      业务说明：
+        用于前端"点赞状态"的展示判断。
+        如果返回 null，表示用户未点赞，按钮显示空心"♡"；
+        如果返回非空记录，表示已点赞，按钮显示实心"❤"
+
+      参数：
+        #{userId}  — 当前登录用户的 ID
+        #{musicId} — 待检查的歌曲 ID
+
+      返回值：
+        LikeRecord 对象 —— 如果存在点赞记录
+        null —— 如果不存在
+
+      性能说明：
+        该查询命中 (user_id, music_id) 联合索引，性能较高
+    -->
     <select id="findByUserAndMusic" resultMap="likeRecordMap">
         SELECT * FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
     </select>
+
+    <delete id="deleteByMusicId">
+        DELETE FROM like_record WHERE music_id = #{musicId}
+    </delete>
+
 </mapper>

@@ -20,23 +20,40 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * JWT 认证过滤器
- * 每个请求都会经过这个过滤器（继承 OncePerRequestFilter 确保每个请求只过滤一次）
+ * JWT 认证过滤器 —— 整个后端安全体系的"守门员"
  *
- * 工作流程：
- * 1. 从 HTTP Header 中取出 Authorization 的值
- * 2. 检查是否是 "Bearer " 开头
- * 3. 如果是，取出后面的 Token 部分
- * 4. 验证 Token，提取 user_id、username、role
- * 5. 设置到 Spring Security 的 SecurityContextHolder 中
- * 6. 后续的 Controller 可以通过 SecurityContextHolder 获取当前用户信息
+ * 每个 HTTP 请求都会经过这个过滤器（继承 OncePerRequestFilter 确保每个请求只过滤一次）。
+ *
+ * ─── 核心工作流程 ───
+ * 1. 从 HTTP 请求头 "Authorization" 中提取 Token 值（格式为 "Bearer xxx.xxx.xxx"）
+ * 2. 检查 Token 是否存在且以 "Bearer " 开头
+ * 3. 取出后面的 JWT 字符串，调用 JwtUtils 验证其签名和有效期
+ * 4. 验证通过后，解析 Token 中存储的用户 ID、用户名、角色
+ * 5. 从数据库查询该用户是否仍处于"启用"状态
+ * 6. 如果一切正常，将用户信息封装为 Spring Security 的 Authentication 对象
+ * 7. 将 Authentication 对象设置到 SecurityContextHolder 中
+ * 8. 后续 Controller 或 Service 可以通过 SecurityContextHolder 获取当前用户身份
+ *
+ * ─── 关键设计 ───
+ * - 不拦截任何请求 —— 即使 Token 无效也放行（让 SecurityConfig 的 URL 权限规则去拦截）
+ * - 如果 Token 有效且用户启用，就设置认证信息；否则不设置（用户未登录/匿名）
+ * - 必须调用 filterChain.doFilter() 放行请求，否则页面永远空白
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    /** JWT 工具类：负责 Token 的生成、解析、验证 */
     private final JwtUtils jwtUtils;
+
+    /** 用户 Mapper：用于从数据库查询用户状态，确保被禁用的用户无法通过认证 */
     private final UserMapper userMapper;
 
+    /**
+     * 构造器注入（Spring 官方推荐的注入方式）
+     *
+     * @param jwtUtils   JWT 工具类，由 Spring 自动注入
+     * @param userMapper 用户数据访问对象，由 Spring 自动注入
+     */
     public JwtAuthenticationFilter(JwtUtils jwtUtils, UserMapper userMapper) {
         this.jwtUtils = jwtUtils;
         this.userMapper = userMapper;

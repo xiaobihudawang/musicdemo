@@ -5,6 +5,7 @@ import org.example.musicdemo.entity.Music;
 import org.example.musicdemo.mapper.DownloadRecordMapper;
 import org.example.musicdemo.mapper.MusicMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -180,16 +181,7 @@ public class MusicService {
         musicMapper.insert(music);
 
         // ---- 7. 后台异步获取封面图 ----
-        try {
-            String coverPath = coverService.fetchCover(title, artist);
-            if (coverPath != null) {
-                music.setCoverPath(coverPath);
-                // 直接用新 SQL 更新 cover_path 字段
-                musicMapper.updateCoverPath(music.getId(), coverPath);
-            }
-        } catch (Exception e) {
-            log.warn("fetch cover failed for {} - {}: {}", title, artist, e.getMessage());
-        }
+        fetchCoverAsync(music.getId(), title, artist);
 
         return music;
     }
@@ -256,5 +248,29 @@ public class MusicService {
         musicMapper.updateDownloadCount(musicId);
 
         return music;
+    }
+
+    /**
+     * 异步获取封面图并更新数据库。
+     * <p>
+     * 使用 {@code @Async} 注解使方法在独立线程中执行，不阻塞上传请求的响应。
+     * 如果获取失败，仅记录日志，不影响用户体验。
+     * </p>
+     *
+     * @param musicId 音乐 ID
+     * @param title   歌曲标题
+     * @param artist  歌手名
+     */
+    @Async
+    public void fetchCoverAsync(Integer musicId, String title, String artist) {
+        try {
+            String coverPath = coverService.fetchCover(title, artist);
+            if (coverPath != null) {
+                musicMapper.updateCoverPath(musicId, coverPath);
+                log.info("async cover fetched for music {}: {}", musicId, coverPath);
+            }
+        } catch (Exception e) {
+            log.warn("async fetch cover failed for {} - {}: {}", title, artist, e.getMessage());
+        }
     }
 }

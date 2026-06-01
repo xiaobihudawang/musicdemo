@@ -3,6 +3,7 @@ package org.example.musicdemo;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * 音乐平台应用的 Spring Boot 启动入口类。
@@ -21,6 +22,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *       被扫描的接口会被动态代理生成实现类并注册为 Spring Bean，
  *       之后可以直接通过 {@code @Autowired} 或构造器注入使用，无需手动编写实现类。
  *       Mapper 对应的 SQL 定义在 {@code src/main/resources/mapper/} 目录下的 XML 文件中。</li>
+ *   <li><b>@EnableAsync</b>：启用异步方法支持，配合 {@code @Async} 注解使用。</li>
  * </ul>
  *
  * <p>应用配置：</p>
@@ -36,6 +38,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 @MapperScan("org.example.musicdemo.mapper")
+@EnableAsync
 public class MusicdemoApplication {
     public static void main(String[] args) {
         SpringApplication.run(MusicdemoApplication.class, args);

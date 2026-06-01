@@ -37,21 +37,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @MapperScan("org.example.musicdemo.mapper")
 public class MusicdemoApplication {
-
-    /**
-     * 应用主入口方法。
-     *
-     * <p>调用 {@code SpringApplication.run()} 将执行以下关键步骤：</p>
-     * <ol>
-     *   <li>加载 application.yml 等配置文件</li>
-     *   <li>启动内嵌的 Tomcat 服务器</li>
-     *   <li>执行自动配置（数据源、Security、Jackson 等）</li>
-     *   <li>扫描并注册所有 Spring Bean</li>
-     *   <li>运行 CommandLineRunner（如果有）</li>
-     * </ol>
-     *
-     * @param args 命令行参数（当前项目未使用）
-     */
     public static void main(String[] args) {
         SpringApplication.run(MusicdemoApplication.class, args);
     }

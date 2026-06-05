@@ -6,55 +6,33 @@
     <title>B站音频下载</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         <img src="/video/logo.png" alt="Loading">
     </div>
 
-    <div class="page-header">
-        <h1>B站下载</h1>
-        <div class="meta">BILIBILI AUDIO</div>
-    </div>
-
-    <div class="card" style="max-width:600px;">
-        <div class="form-group">
-            <label>B站视频链接 *</label>
-            <input type="text" id="bvidInput" placeholder="粘贴 B 站视频链接，如 https://www.bilibili.com/video/BV1xx...">
+    <div class="container">
+        <div class="page-header">
+            <h1>B站下载</h1>
+            <div class="meta">BILIBILI AUDIO</div>
         </div>
-        <button class="btn btn-primary" onclick="doDownload()">开始下载</button>
+
+        <div class="card" style="max-width:600px;">
+            <div class="form-group">
+                <label>B站视频链接 *</label>
+                <input type="text" id="bvidInput" placeholder="粘贴 B 站视频链接，如 https://www.bilibili.com/video/BV1xx...">
+            </div>
+            <button class="btn btn-primary" id="biliDownloadBtn" onclick="doDownload()">开始下载</button>
+        </div>
     </div>
 
-    <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
-    <script>
-        if (!isLogined()) { showToast('请先登录', 'error'); setTimeout(() => { window.location.href = '/login.html'; }, 1000); }
-
-        async function doDownload() {
-            const url = document.getElementById('bvidInput').value.trim();
-            if (!url) { showToast('请输入B站视频链接', 'error'); return; }
-            const btn = document.querySelector('.btn-primary');
-            btn.disabled = true; btn.textContent = '下载中...';
-            try {
-                const response = await fetch('/api/bilibili/download', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
-                    body: JSON.stringify({ url })
-                });
-                if (!response.ok) { const errData = await response.json(); showToast(errData.message || '下载失败', 'error'); return; }
-                const disposition = response.headers.get('Content-Disposition') || '';
-                let filename = 'audio.m4a';
-                const match = disposition.match(/filename\*=UTF-8''(.+?)(?:;|$)/);
-                if (match) filename = decodeURIComponent(match[1]);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = blobUrl; a.download = filename;
-                document.body.appendChild(a); a.click();
-                document.body.removeChild(a); URL.revokeObjectURL(blobUrl);
-                showToast('下载成功', 'success');
-            } catch (e) { showToast('下载失败: ' + e.message, 'error'); }
-            finally { btn.disabled = false; btn.textContent = '开始下载'; }
-        }
-    </script>
+    <script src="/js/api.js"></script>
+    <script src="/js/pages/bilibili.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

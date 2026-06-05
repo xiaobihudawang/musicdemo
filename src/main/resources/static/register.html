@@ -6,7 +6,9 @@
     <title>注册</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
 </head>
 <body class="auth-page">
     <div class="loading-overlay" id="loadingOverlay">
@@ -21,8 +23,8 @@
                 <input type="text" id="username" placeholder="请输入用户名">
             </div>
             <div class="form-group">
-                <label>密码 *</label>
-                <input type="password" id="password" placeholder="请输入密码（至少6位）">
+                <label>密码 *（6-18 位）</label>
+                <input type="password" id="password" placeholder="请输入密码（6-18 位）">
             </div>
             <div class="form-group">
                 <label>昵称</label>
@@ -39,25 +41,9 @@
         </div>
     </div>
 
-    <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
-    <script>
-        async function doRegister() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            if (!username || !password) { showToast('用户名和密码为必填项', 'error'); return; }
-            if (password.length < 6 || password.length > 18) { showToast('密码长度不能少于6位或大于18位', 'error'); return; }
-
-            const res = await post('/api/auth/register', { username, password, name, email });
-            if (res.code === 200) {
-                showToast('注册成功，请登录', 'success');
-                setTimeout(() => { window.location.href = '/login.html'; }, 1000);
-            } else {
-                showToast(res.message, 'error');
-            }
-        }
-    </script>
+    <script src="/js/api.js"></script>
+    <script src="/js/pages/register.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

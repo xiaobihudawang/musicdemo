@@ -27,17 +27,20 @@ public interface MusicMapper {
     /** 根据 ID 删除音乐 */
     int deleteById(@Param("id") Integer id);
 
-    /** 增量更新点赞数（+1/-1） */
-    int updateLikeCount(@Param("id") Integer id, @Param("delta") int delta);
-
-    /** 增量更新评论数（+1/-1） */
-    int updateCommentCount(@Param("id") Integer id, @Param("delta") int delta);
-
-    /** 下载数 +1 */
-    int updateDownloadCount(@Param("id") Integer id);
-
     /** 更新封面图路径 */
     int updateCoverPath(@Param("id") Integer id, @Param("coverPath") String coverPath);
+
+    /** 更新歌词内容 */
+    int updateLyrics(@Param("id") Integer id, @Param("lyrics") String lyrics);
+
+    /** 统计歌曲的点赞数 */
+    int countLikes(@Param("id") Integer id);
+
+    /** 统计歌曲的评论数 */
+    int countComments(@Param("id") Integer id);
+
+    /** 统计歌曲的下载数 */
+    int countDownloads(@Param("id") Integer id);
 
     /** 本周点赞 TOP10 */
     List<Music> findWeeklyLikeTop10(@Param("start") String start, @Param("end") String end);

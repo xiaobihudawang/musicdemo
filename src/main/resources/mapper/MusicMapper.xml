@@ -54,6 +54,7 @@
         <result property="description" column="description"/>
         <result property="filePath" column="file_path"/>
         <result property="coverPath" column="cover_path"/>
+        <result property="lyrics" column="lyrics"/>
         <result property="fileSize" column="file_size"/>
         <result property="likeCount" column="like_count"/>
         <result property="commentCount" column="comment_count"/>
@@ -151,21 +152,10 @@
       useGeneratedKeys="true" + keyProperty="id"：
         插入后自动将数据库生成的自增主键回填到 Music 对象的 id 属性中，
         方便后续业务逻辑使用（如返回新歌曲 ID 给前端）
-
-      参数：
-        #{title}         — 歌曲标题
-        #{artist}        — 歌手
-        #{description}   — 描述
-        #{filePath}      — 文件存储路径
-        #{fileSize}      — 文件大小
-        #{likeCount}     — 初始点赞数（通常为 0）
-        #{commentCount}  — 初始评论数（通常为 0）
-        #{downloadCount} — 初始下载数（通常为 0）
-        #{userId}        — 上传者用户 ID
     -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.Music" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO music (title, artist, description, file_path, cover_path, file_size, like_count, comment_count, download_count, user_id)
-        VALUES (#{title}, #{artist}, #{description}, #{filePath}, #{coverPath}, #{fileSize}, #{likeCount}, #{commentCount}, #{downloadCount}, #{userId})
+        INSERT INTO music (title, artist, description, file_path, cover_path, lyrics, file_size, user_id)
+        VALUES (#{title}, #{artist}, #{description}, #{filePath}, #{coverPath}, #{lyrics}, #{fileSize}, #{userId})
     </insert>
 
     <!--
@@ -187,55 +177,39 @@
     </delete>
 
     <!--
-      ====================== 计数器更新（原子操作） ======================
+      ====================== 统计方法（替代冗余字段） ======================
     -->
 
     <!--
-      updateLikeCount：原子更新点赞数
-
-      使用 like_count = like_count + #{delta} 的原地更新方式，
-      避免"先查后改"带来的并发安全问题（丢失更新问题）。
-      delta 传 +1 表示点赞，传 -1 表示取消点赞。
-      底层利用了 MySQL 行锁保证并发安全。
-
-      参数：
-        #{id}    — 歌曲 ID
-        #{delta} — 变化量（int），+1 或 -1
-
-      注意：取消点赞时，Service 层应校验 like_count > 0 后再执行 -1 操作，
-            防止点赞数变成负数
+      countLikes：统计歌曲的点赞数
+      从 like_record 表中统计指定歌曲的点赞总数
     -->
-    <update id="updateLikeCount">
-        UPDATE music SET like_count = like_count + #{delta} WHERE id = #{id}
-    </update>
+    <select id="countLikes" resultType="int">
+        SELECT COUNT(*) FROM like_record WHERE music_id = #{id}
+    </select>
 
     <!--
-      updateCommentCount：原子更新评论数
-
-      与 updateLikeCount 同理，delta = +1 表示新增评论，-1 表示删除评论
-
-      参数：
-        #{id}    — 歌曲 ID
-        #{delta} — 变化量（int），+1 或 -1
+      countComments：统计歌曲的评论数
+      从 comment 表中统计指定歌曲的评论总数
     -->
-    <update id="updateCommentCount">
-        UPDATE music SET comment_count = comment_count + #{delta} WHERE id = #{id}
-    </update>
+    <select id="countComments" resultType="int">
+        SELECT COUNT(*) FROM comment WHERE music_id = #{id}
+    </select>
 
     <!--
-      updateDownloadCount：下载次数 +1
-
-      下载只增不减（不提供"取消下载"功能），所以直接 +1，不需要 delta 参数
-
-      参数：
-        #{id} — 被下载的歌曲 ID
+      countDownloads：统计歌曲的下载数
+      从 download_record 表中统计指定歌曲的下载总数
     -->
-    <update id="updateDownloadCount">
-        UPDATE music SET download_count = download_count + 1 WHERE id = #{id}
-    </update>
+    <select id="countDownloads" resultType="int">
+        SELECT COUNT(*) FROM download_record WHERE music_id = #{id}
+    </select>
 
     <update id="updateCoverPath">
         UPDATE music SET cover_path = #{coverPath} WHERE id = #{id}
+    </update>
+
+    <update id="updateLyrics">
+        UPDATE music SET lyrics = #{lyrics} WHERE id = #{id}
     </update>
 
     <!--

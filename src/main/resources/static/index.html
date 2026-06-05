@@ -6,137 +6,50 @@
     <title>音乐列表</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         <img src="/video/logo.png" alt="Loading">
     </div>
 
-    <div class="page-header">
-        <h1>音乐列表</h1>
-        <div class="meta" id="pageMeta">加载中...</div>
-    </div>
-
-    <div class="search-bar">
-        <input type="text" id="keyword" placeholder="搜索歌曲标题或歌手..." autocomplete="off">
-        <button class="btn-search" onclick="search()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
-    </div>
-
-    <div class="track-list" id="trackList">
-        <div id="listSkeleton">
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line-sm"></div>
-            <div style="height:12px;"></div>
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line-sm"></div>
-            <div style="height:12px;"></div>
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line-sm"></div>
-            <div style="height:12px;"></div>
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line-sm"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>音乐列表</h1>
+            <div class="meta" id="pageMeta">加载中...</div>
         </div>
+
+        <div class="search-bar">
+            <input type="text" id="keyword" placeholder="搜索歌曲标题或歌手..." autocomplete="off">
+            <button class="btn-search" onclick="search()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+        </div>
+
+        <div class="track-list" id="trackList">
+            <div id="listSkeleton">
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+                <div style="height:12px;"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+                <div style="height:12px;"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+                <div style="height:12px;"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line-sm"></div>
+            </div>
+        </div>
+
+        <nav class="pagination" id="pagination"></nav>
     </div>
 
-    <nav class="pagination" id="pagination"></nav>
-
-    <script src="/js/api.js"></script>
     <script src="/js/common.js"></script>
-    <script>
-        let currentPage = 1;
-        const pageSize = 12;
-
-        async function loadList(page, keyword) {
-            let url = `/api/music/list?page=${page}&size=${pageSize}`;
-            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
-
-            const res = await get(url);
-            if (res.code !== 200) return;
-
-            document.getElementById('listSkeleton')?.classList.add('hidden');
-
-            const data = res.data;
-            renderList(data.list);
-            renderPagination(data.total, page);
-            document.getElementById('pageMeta').textContent =
-                `第 ${page} 页，共 ${Math.ceil(data.total / pageSize) || 1} 页 — 每页 ${pageSize} 首`;
-        }
-
-        function renderList(list) {
-            const container = document.getElementById('trackList');
-            if (!list || list.length === 0) {
-                container.innerHTML = '<div class="tip">暂无音乐，快去上传一首吧！</div>';
-                return;
-            }
-
-            container.innerHTML = list.map((item, index) => {
-                const hasCover = item.coverPath;
-                const coverUrl = `/api/music/cover/${item.coverPath}`;
-                const realIndex = (currentPage - 1) * pageSize + index + 1;
-                return `
-                    <div class="track" onclick="location.href='/detail.html?id=${item.id}'">
-                        <span class="track-index">${String(realIndex).padStart(2, '0')}</span>
-                        <div class="track-cover">
-                            ${hasCover
-                                ? `<img src="${coverUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
-                                : `<div class="placeholder">♪</div>`
-                            }
-                        </div>
-                        <div class="track-meta">
-                            <div class="track-title">${escapeHtml(item.title)}</div>
-                            <div class="track-artist">${escapeHtml(item.artist)}</div>
-                        </div>
-                        <button class="track-play" onclick="event.stopPropagation();location.href='/detail.html?id=${item.id}'">
-                            <svg viewBox="0 0 24 24"><polygon points="8,5 20,12 8,19"/></svg>
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderPagination(total, page) {
-            const totalPages = Math.ceil(total / pageSize);
-            const container = document.getElementById('pagination');
-            if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-            let html = `<button class="page-arrow" ${page <= 1 ? 'disabled' : ''} onclick="goPage(${page - 1})">&lsaquo;</button>`;
-            for (let i = 1; i <= totalPages; i++) {
-                html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
-            }
-            html += `<button class="page-arrow" ${page >= totalPages ? 'disabled' : ''} onclick="goPage(${page + 1})">&rsaquo;</button>`;
-            container.innerHTML = html;
-        }
-
-        function goPage(page) {
-            currentPage = page;
-            const keyword = document.getElementById('keyword').value.trim();
-            loadList(page, keyword);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function search() {
-            currentPage = 1;
-            loadList(1, document.getElementById('keyword').value.trim());
-        }
-
-        async function handleAutoLogin() {
-            const token = getToken();
-            if (!token || isTokenExpired(token)) { clearToken(); window.location.href = '/login.html?expired=1'; return; }
-            const res = await get('/api/auth/verify');
-            if (res.code !== 200) { clearToken(); window.location.href = '/login.html?expired=1'; }
-        }
-
-        document.getElementById('keyword').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') search();
-        });
-
-        (async function() {
-            await handleAutoLogin();
-            loadList(1, '');
-        })();
-    </script>
+    <script src="/js/api.js"></script>
+    <script src="/js/pages/index.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

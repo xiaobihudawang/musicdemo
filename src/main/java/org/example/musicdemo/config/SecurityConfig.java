@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/music/list").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/music/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/music/*/stream").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/music/*/lyrics").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/external/**").permitAll()
                         // 管理员接口

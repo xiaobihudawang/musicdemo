@@ -29,14 +29,17 @@ public class MusicService {
     private final MusicMapper musicMapper;
     private final DownloadRecordMapper downloadRecordMapper;
     private final CoverService coverService;
+    private final LyricsService lyricsService;
 
     @Value("${music.file-path}")
     private String filePath;
 
-    public MusicService(MusicMapper musicMapper, DownloadRecordMapper downloadRecordMapper, CoverService coverService) {
+    public MusicService(MusicMapper musicMapper, DownloadRecordMapper downloadRecordMapper,
+                        CoverService coverService, LyricsService lyricsService) {
         this.musicMapper = musicMapper;
         this.downloadRecordMapper = downloadRecordMapper;
         this.coverService = coverService;
+        this.lyricsService = lyricsService;
     }
 
     /** 分页查询音乐列表，支持关键词模糊搜索 */
@@ -53,6 +56,21 @@ public class MusicService {
     /** 根据 ID 查询单首音乐 */
     public Music findById(Integer id) {
         return musicMapper.findById(id);
+    }
+
+    /** 统计歌曲的点赞数 */
+    public int countLikes(Integer id) {
+        return musicMapper.countLikes(id);
+    }
+
+    /** 统计歌曲的评论数 */
+    public int countComments(Integer id) {
+        return musicMapper.countComments(id);
+    }
+
+    /** 统计歌曲的下载数 */
+    public int countDownloads(Integer id) {
+        return musicMapper.countDownloads(id);
     }
 
     /** 允许上传的文件扩展名白名单 */
@@ -97,12 +115,10 @@ public class MusicService {
             music.setDescription(description);
             music.setFilePath(newFilename);
             music.setFileSize(file.getSize());
-            music.setLikeCount(0);
-            music.setCommentCount(0);
-            music.setDownloadCount(0);
             music.setUserId(userId);
             musicMapper.insert(music);
             coverService.fetchCoverAndUpdate(music.getId(), title, artist);
+            lyricsService.fetchLyricsAndUpdate(music.getId(), title, artist);
             return music;
         } catch (Exception e) {
             boolean deleted = destFile.delete();
@@ -142,8 +158,8 @@ public class MusicService {
     }
 
     /**
-     * 记录下载并更新下载计数。
-     * 每次下载插入 download_record 记录，并将 music.download_count +1。
+     * 记录下载行为。
+     * 不再维护冗余计数字段，下载数通过 download_record 表实时统计。
      */
     @Transactional
     public Music download(Integer musicId, Integer userId) {
@@ -156,8 +172,6 @@ public class MusicService {
         record.setUserId(userId);
         record.setMusicId(musicId);
         downloadRecordMapper.insert(record);
-
-        musicMapper.updateDownloadCount(musicId);
 
         return music;
     }

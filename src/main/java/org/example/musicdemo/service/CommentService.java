@@ -2,7 +2,6 @@ package org.example.musicdemo.service;
 
 import org.example.musicdemo.entity.Comment;
 import org.example.musicdemo.mapper.CommentMapper;
-import org.example.musicdemo.mapper.MusicMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,17 +9,17 @@ import java.util.List;
 
 /**
  * 评论服务，处理音乐评论的增删查逻辑。
- * 修改评论时同步更新 music.comment_count。
+ * 不再维护冗余计数字段，评论数通过 comment 表实时统计。
  */
 @Service
 public class CommentService {
 
     private final CommentMapper commentMapper;
-    private final MusicMapper musicMapper;
+    private final SensitiveWordService sensitiveWordService;
 
-    public CommentService(CommentMapper commentMapper, MusicMapper musicMapper) {
+    public CommentService(CommentMapper commentMapper, SensitiveWordService sensitiveWordService) {
         this.commentMapper = commentMapper;
-        this.musicMapper = musicMapper;
+        this.sensitiveWordService = sensitiveWordService;
     }
 
     /** 查询指定音乐的所有评论 */
@@ -28,11 +27,19 @@ public class CommentService {
         return commentMapper.findByMusicId(musicId);
     }
 
-    /** 添加评论，同时将 music.comment_count 加 1 */
+    /**
+     * 添加评论。
+     *
+     * 提交前调用 SensitiveWordService 拦截包含脏话 / 暴力 / 侮辱等
+     * 敏感词的内容，命中即抛 RuntimeException，由 CommentController
+     * 已有 try/catch 转成 Result.fail(msg) 返回给前端。
+     */
     @Transactional
     public Comment add(Comment comment) {
+        if (sensitiveWordService.containsForbidden(comment.getContent())) {
+            throw new RuntimeException("评论包含不当内容，请修改后重试");
+        }
         commentMapper.insert(comment);
-        musicMapper.updateCommentCount(comment.getMusicId(), 1);
         return comment;
     }
 
@@ -41,10 +48,9 @@ public class CommentService {
         return commentMapper.findById(id);
     }
 
-    /** 删除评论，同时将 music.comment_count 减 1 */
+    /** 删除评论 */
     @Transactional
     public void delete(Integer id, Integer musicId) {
         commentMapper.deleteById(id);
-        musicMapper.updateCommentCount(musicId, -1);
     }
 }

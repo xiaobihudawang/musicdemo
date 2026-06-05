@@ -2,7 +2,6 @@ package org.example.musicdemo.service;
 
 import org.example.musicdemo.entity.LikeRecord;
 import org.example.musicdemo.mapper.LikeRecordMapper;
-import org.example.musicdemo.mapper.MusicMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,17 +10,15 @@ import java.util.Map;
 
 /**
  * 点赞服务，处理用户对音乐的点赞与取消点赞（toggle 模式）。
- * 每次操作同时更新 like_record 表和 music.like_count 字段。
+ * 不再维护冗余计数字段，点赞数通过 like_record 表实时统计。
  */
 @Service
 public class LikeService {
 
     private final LikeRecordMapper likeRecordMapper;
-    private final MusicMapper musicMapper;
 
-    public LikeService(LikeRecordMapper likeRecordMapper, MusicMapper musicMapper) {
+    public LikeService(LikeRecordMapper likeRecordMapper) {
         this.likeRecordMapper = likeRecordMapper;
-        this.musicMapper = musicMapper;
     }
 
     /** 切换点赞状态：已赞则取消，未赞则点赞 */
@@ -33,14 +30,12 @@ public class LikeService {
 
         if (existing != null) {
             likeRecordMapper.delete(userId, musicId);
-            musicMapper.updateLikeCount(musicId, -1);
             result.put("liked", false);
         } else {
             LikeRecord record = new LikeRecord();
             record.setUserId(userId);
             record.setMusicId(musicId);
             likeRecordMapper.insert(record);
-            musicMapper.updateLikeCount(musicId, 1);
             result.put("liked", true);
         }
 

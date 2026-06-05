@@ -16,24 +16,28 @@
 -- 表 1：user（用户表）
 --
 -- 字段说明：
---   id          - 主键，自增整数
---   username    - 用户名，唯一约束（UNIQUE），不允许重复
---   password    - 密码，使用 BCrypt 算法加密后存储
---   name        - 昵称（显示名称），可选，不填时与 username 相同
---   email       - 邮箱，可选
---   role        - 角色：'user' 普通用户 / 'admin' 管理员，默认 user
---   enabled     - 是否启用：1=启用（正常使用），0=禁用（无法登录）
---   create_time - 注册时间，默认当前时间
+--   id            - 主键，自增整数
+--   username      - 用户名，唯一约束（UNIQUE），不允许重复
+--   password      - 密码，使用 BCrypt 算法加密后存储
+--   name          - 昵称（显示名称），可选，不填时与 username 相同
+--   email         - 邮箱，可选
+--   role          - 角色：'user' 普通用户 / 'admin' 管理员，默认 user
+--   enabled       - 是否启用：1=启用（正常使用），0=禁用（无法登录）
+--   totp_secret   - TOTP 密钥（Base32 编码），用于生成/验证动态验证码
+--   totp_enabled  - 是否已启用 TOTP 两步验证：1=已启用，0=未启用
+--   create_time   - 注册时间，默认当前时间
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `user` (
-    `id`          INT AUTO_INCREMENT PRIMARY KEY,
-    `username`    VARCHAR(255) NOT NULL UNIQUE,
-    `password`    VARCHAR(255) NOT NULL,
-    `name`        VARCHAR(255),
-    `email`       VARCHAR(255),
-    `role`        VARCHAR(50) NOT NULL DEFAULT 'user',
-    `enabled`     TINYINT(1) DEFAULT 1,
-    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP
+    `id`            INT AUTO_INCREMENT PRIMARY KEY,
+    `username`      VARCHAR(255) NOT NULL UNIQUE,
+    `password`      VARCHAR(255) NOT NULL,
+    `name`          VARCHAR(255),
+    `email`         VARCHAR(255),
+    `role`          VARCHAR(50) NOT NULL DEFAULT 'user',
+    `enabled`       TINYINT(1) DEFAULT 1,
+    `totp_secret`   VARCHAR(255),
+    `totp_enabled`  TINYINT(1) DEFAULT 0,
+    `create_time`   DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -65,9 +69,7 @@ CREATE TABLE IF NOT EXISTS `music` (
     `file_path`      VARCHAR(500) NOT NULL,
     `file_size`      BIGINT DEFAULT 0,
     `cover_path`     VARCHAR(500) DEFAULT NULL COMMENT '封面图片路径',
-    `like_count`     INT DEFAULT 0,
-    `comment_count`  INT DEFAULT 0,
-    `download_count` INT DEFAULT 0,
+    `lyrics`         TEXT DEFAULT NULL COMMENT 'LRC格式歌词',
     `user_id`        INT NOT NULL,
     `create_time`    DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)

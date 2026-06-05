@@ -18,18 +18,20 @@ public class Music {
     private String filePath;
     /** 封面图片路径（相对路径，位于 covers/ 子目录下） */
     private String coverPath;
+    /** LRC格式歌词 */
+    private String lyrics;
     /** 音频文件字节大小 */
     private Long fileSize;
-    /** 点赞数（冗余缓存字段，原子更新） */
-    private Integer likeCount;
-    /** 评论数（冗余缓存字段，原子更新） */
-    private Integer commentCount;
-    /** 下载数（冗余缓存字段，原子更新） */
-    private Integer downloadCount;
     /** 上传用户 ID */
     private Integer userId;
     /** 上传时间，数据库自动填充 */
     private LocalDateTime createTime;
     /** 上传用户昵称（非数据库字段，通过 JOIN user 表获取） */
     private String username;
+    /** 点赞数（非数据库字段，通过 like_record 表统计） */
+    private Integer likeCount;
+    /** 评论数（非数据库字段，通过 comment 表统计） */
+    private Integer commentCount;
+    /** 下载数（非数据库字段，通过 download_record 表统计） */
+    private Integer downloadCount;
 }

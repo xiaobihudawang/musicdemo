@@ -1,0 +1,334 @@
+/* ===========================================================
+   components.css
+   通用组件：button、card、form、toast、skeleton、track 列表、
+   comment、tabs、rank-item、file-upload、table、detail 通用块
+   加载顺序：第三个（依赖 base + layout）
+   =========================================================== */
+
+/* ===========================================================
+   Buttons
+   =========================================================== */
+.btn {
+    display: inline-block;
+    padding: 9px 22px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    text-align: center;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+}
+.btn-primary { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+.btn-primary:hover { background: #1a1713; border-color: #1a1713; }
+.btn-danger { background: #c0392b; color: #fff; border-color: #c0392b; }
+.btn-danger:hover { background: #a93226; }
+.btn-success { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+.btn-default { background: var(--surface); color: var(--text-muted); box-shadow: var(--shadow); }
+.btn-default:hover { background: var(--bg); color: var(--text-primary); }
+.btn-sm { padding: 5px 14px; font-size: 12px; border-radius: 6px; }
+
+/* ===========================================================
+   Card 卡片
+   =========================================================== */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.2s forwards;
+}
+.card-header {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* ===========================================================
+   Form 表单
+   =========================================================== */
+.form-group { margin-bottom: 22px; }
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(139,105,20,0.08);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* ===========================================================
+   Track List 音乐列表
+   =========================================================== */
+.track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.track {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+    border-radius: 4px;
+}
+.track:nth-child(1)  { animation-delay: 0.03s; }
+.track:nth-child(2)  { animation-delay: 0.06s; }
+.track:nth-child(3)  { animation-delay: 0.09s; }
+.track:nth-child(4)  { animation-delay: 0.12s; }
+.track:nth-child(5)  { animation-delay: 0.15s; }
+.track:nth-child(6)  { animation-delay: 0.18s; }
+.track:nth-child(7)  { animation-delay: 0.21s; }
+.track:nth-child(8)  { animation-delay: 0.24s; }
+.track:nth-child(9)  { animation-delay: 0.27s; }
+.track:nth-child(10) { animation-delay: 0.30s; }
+.track:nth-child(11) { animation-delay: 0.33s; }
+.track:nth-child(12) { animation-delay: 0.36s; }
+.track:hover {
+    background: var(--surface);
+    box-shadow: var(--shadow-hover);
+    margin: 0 -8px;
+    padding: 16px 28px;
+    border-bottom-color: transparent;
+}
+.track:hover .track-index { color: var(--accent); }
+
+.track-index {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text-dim);
+    min-width: 26px;
+    text-align: center;
+    transition: color 0.2s ease;
+}
+.track-cover {
+    width: 52px; height: 52px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 6px rgba(44,40,33,0.06);
+}
+.track-cover img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+.track:hover .track-cover img { transform: scale(1.08); }
+.track-cover .placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-style: italic;
+}
+.track-meta { flex: 1; min-width: 0; }
+.track-title {
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+    color: var(--text-primary);
+}
+.track-artist {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+}
+.track-play {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+.track-play svg { width: 12px; height: 12px; fill: var(--text-muted); transition: fill 0.2s ease; }
+.track:hover .track-play { background: var(--accent); border-color: var(--accent); }
+.track:hover .track-play svg { fill: #fff; }
+
+@media (max-width: 600px) {
+    .track { padding: 14px 12px; gap: 12px; }
+    .track-cover { width: 44px; height: 44px; }
+    .track-index { min-width: 18px; font-size: 0.75rem; }
+    .track-title { font-size: 0.85rem; }
+    .track:hover { margin: 0; padding: 14px 12px; }
+}
+
+/* ===========================================================
+   Comments 评论
+   =========================================================== */
+.comment-form { margin-bottom: 24px; }
+.comment-list { list-style: none; }
+.comment-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.comment-item:last-child { border-bottom: none; }
+.comment-item .comment-user { font-family:'Cormorant Garamond',serif; font-weight:600; font-style:italic; margin-right:10px; color: var(--accent); }
+.comment-item .comment-time { color: var(--text-dim); font-size:12px; font-family:'Cormorant Garamond',serif; font-style:italic; }
+.comment-item .comment-content { margin-top:4px; color: var(--text-primary); line-height:1.8; font-size:0.9rem; }
+
+/* ===========================================================
+   Tabs 标签页
+   =========================================================== */
+.tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+}
+.tab-btn {
+    padding: 10px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    font-family: 'Noto Serif SC', serif;
+}
+.tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+.tab-btn:hover { color: var(--text-primary); }
+
+/* ===========================================================
+   Rank Items 排行榜条目
+   =========================================================== */
+.rank-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-item .rank-num {
+    width: 36px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text-dim);
+}
+.rank-item.top3 .rank-num { color: var(--accent); }
+
+/* ===========================================================
+   File Upload 文件上传
+   =========================================================== */
+.file-upload {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--bg);
+}
+.file-upload:hover { border-color: var(--accent); background: var(--accent-light); }
+.file-upload.has-file {
+    border-color: var(--accent);
+    border-style: solid;
+    background: var(--accent-light);
+    padding: 24px 24px;
+}
+.file-upload-icon { margin-bottom:10px; color: var(--text-dim); }
+.file-upload-text { color: var(--text-muted); font-size:14px; font-weight:500; font-family:'Cormorant Garamond',serif; }
+.file-upload-hint { color: var(--text-dim); font-size:12px; margin-top:4px; font-style:italic; }
+.file-upload.has-file .file-upload-text { color: var(--accent); }
+.file-upload.has-file .file-upload-hint { display:none; }
+.file-info { color: var(--text-muted); font-size:13px; margin-top:8px; font-style:italic; font-family:'Cormorant Garamond',serif; }
+
+/* ===========================================================
+   Table 表格
+   =========================================================== */
+.table { width:100%; border-collapse:collapse; font-size:13px; }
+.table th, .table td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border-light); }
+.table th { background: var(--bg); font-family:'Cormorant Garamond',serif; font-weight:600; color: var(--text-muted); }
+.table tr:hover { background: var(--bg); }
+
+/* ===========================================================
+   Toast 顶部提示
+   =========================================================== */
+.toast {
+    position: fixed;
+    top: 72px; left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 13px;
+    z-index: 9999;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 4px 16px rgba(44,40,33,0.12);
+    font-family: 'Noto Serif SC', serif;
+}
+.toast.success { background: var(--accent); }
+.toast.error { background: #c0392b; }
+.toast.info { background: var(--text-muted); }
+
+/* ===========================================================
+   Skeleton 骨架屏 + 隐藏工具类
+   =========================================================== */
+.skeleton {
+    background: linear-gradient(90deg, var(--border-light) 25%, var(--border) 50%, var(--border-light) 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+.skeleton-line { height:14px; margin-bottom:10px; width:100%; }
+.skeleton-line:last-child { width:60%; }
+.skeleton-line-sm { height:10px; width:40%; margin-bottom:6px; }
+.skeleton-block { height:60px; margin-bottom:10px; }
+.skeleton-title { height:20px; width:70%; margin-bottom:14px; }
+.hidden { display:none !important; }

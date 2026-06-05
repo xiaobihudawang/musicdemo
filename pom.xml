@@ -168,6 +168,28 @@
             <scope>test</scope>
         </dependency>
 
+        <!--
+          otp-java：TOTP (Time-based One-Time Password) 实现库
+          用于生成 TOTP 密钥、二维码 URI 及验证动态验证码
+        -->
+        <dependency>
+            <groupId>com.github.bastiaanjansen</groupId>
+            <artifactId>otp-java</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!--
+          sensitive-word：Java 敏感词过滤库（DFA 算法）
+          内置 6W+ 词库，覆盖黄色 / 暴力 / 侮辱 / 政治等常见敏感词
+          支持繁简互换、全角半角、英文大小写、变体形式等自动归一化
+          评论发布前调用 contains() 阻止包含敏感词的内容入库
+        -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+            <version>0.29.3</version>
+        </dependency>
+
     </dependencies>
 
     <!-- ========================== 构建配置 ========================== -->

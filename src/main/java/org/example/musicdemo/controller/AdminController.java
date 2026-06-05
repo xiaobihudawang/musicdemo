@@ -108,7 +108,7 @@ public class AdminController {
             musicMapper.updateCoverPath(id, coverPath);
             return Result.success(Map.of("coverPath", coverPath));
         } catch (IOException e) {
-            return Result.fail("封面上传失败");
+            return Result.fail(ResultCode.INTERNAL_ERROR);
         }
     }
 }

@@ -1,0 +1,295 @@
+/* ===========================================================
+   layout.css
+   页面布局：navbar、container、page-header、search-bar、
+   pagination、loading-overlay、auth-container
+   加载顺序：第二个（依赖 base.css 的变量）
+   =========================================================== */
+
+/* ===========================================================
+   Navbar 顶部导航栏
+   =========================================================== */
+.navbar {
+    background: var(--surface);
+    color: var(--text-primary);
+    padding: 0 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 56px;
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar .logo { font-size:17px; font-weight:600; font-family:'Cormorant Garamond',serif; letter-spacing:0.02em; }
+.navbar .logo a { color: var(--text-primary); }
+
+.navbar .nav-links { display:flex; align-items:center; gap:2px; }
+.navbar .nav-links a {
+    color: var(--text-muted);
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-family: 'Noto Serif SC', serif;
+}
+.navbar .nav-links a:hover { background: var(--bg); color: var(--text-primary); }
+
+.navbar .user-info {
+    display:flex; align-items:center; gap:12px;
+    margin-left:6px; padding-left:14px;
+    border-left:1px solid var(--border-light);
+}
+
+.navbar .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 5px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Noto Serif SC', serif;
+    transition: all 0.2s;
+}
+.navbar .btn-logout:hover { background: var(--bg); color: var(--text-primary); }
+
+/* ===========================================================
+   Container 页面内容容器
+   - .container        默认居中 800px 宽
+   - .container-fluid  100% 宽（详情页、排行榜大屏）
+   =========================================================== */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 56px 24px 100px;
+    position: relative;
+    z-index: 1;
+}
+
+.container-fluid {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.container .tip {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 80px 0;
+    font-style: italic;
+}
+
+/* ===========================================================
+   Page Header 页面标题
+   =========================================================== */
+.page-header {
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+}
+.page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+.page-header .meta {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+}
+
+/* ===========================================================
+   Search Bar 搜索框
+   =========================================================== */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 36px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.1s forwards;
+}
+.search-bar input {
+    flex: 1;
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: 'Noto Serif SC', serif;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+.search-bar input::placeholder { color: var(--text-dim); font-style: italic; }
+.search-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(139,105,20,0.08); }
+.search-bar .btn-search {
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+.search-bar .btn-search:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===========================================================
+   Pagination 分页
+   =========================================================== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 52px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.5s forwards;
+}
+.page-btn {
+    min-width: 34px; height: 34px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+.page-btn:hover { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow); }
+.page-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(139,105,20,0.2); }
+.page-arrow {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+.page-arrow:hover { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow); }
+.page-arrow:disabled { opacity: 0.3; cursor: default; }
+.page-arrow:disabled:hover { background: transparent; box-shadow: none; color: var(--text-muted); }
+
+/* ===========================================================
+   Loading Overlay 全屏加载遮罩
+   =========================================================== */
+.loading-overlay {
+    position: fixed; inset: 0;
+    z-index: 10000;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+}
+.loading-overlay img {
+    width: 56px; height: auto;
+    animation: loadingPulse 1.5s ease-in-out infinite;
+    opacity: 0.5;
+}
+.loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+/* ===========================================================
+   Auth 登录/注册页面
+   =========================================================== */
+body.auth-page {
+    background-color: var(--bg);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 400px 400px;
+}
+.auth-container { max-width: 400px; margin: 0 auto; padding: 80px 20px 40px; }
+.auth-container h2 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+.auth-container .card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 36px 32px;
+    margin-bottom: 20px;
+}
+.auth-container .form-group { margin-bottom: 22px; }
+.auth-container .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.auth-container .form-group input {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: 'Noto Serif SC', serif;
+    transition: all 0.2s;
+    outline: none;
+    box-shadow: var(--shadow);
+}
+.auth-container .form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(139,105,20,0.08);
+}
+.auth-container .form-group input::placeholder { color: var(--text-dim); font-style: italic; }
+.auth-container .form-group input:-webkit-autofill,
+.auth-container .form-group input:-webkit-autofill:hover,
+.auth-container .form-group input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset;
+    transition: background-color 5000s ease-in-out 0s;
+    border-color: var(--border);
+}
+.auth-container .form-actions { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+.auth-container .btn-primary {
+    width: 100%; padding: 12px;
+    background: var(--text-primary); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s ease;
+    font-family: 'Noto Serif SC', serif;
+}
+.auth-container .btn-primary:hover { background: #1a1713; }
+.auth-container .form-actions a { text-align: center; color: var(--text-muted); font-size: 13px; text-decoration: none; transition: all 0.2s; padding: 4px 0; }
+.auth-container .form-actions a:hover { color: var(--accent); }
+.auth-container .checkbox-label { display:flex !important; align-items:center; gap:8px; font-weight:normal !important; font-size:13px; color:var(--text-muted) !important; cursor:pointer; user-select:none; }
+.auth-container .checkbox-label input[type="checkbox"] { width:auto !important; cursor:pointer; accent-color:var(--accent); }
+
+/* ===========================================================
+   响应式
+   =========================================================== */
+@media (max-width: 600px) {
+    .container { padding: 32px 14px 80px; }
+    .page-header h1 { font-size: 1.6rem; }
+    .navbar { padding: 0 14px; }
+    .navbar .nav-links a { padding: 6px 8px; font-size: 12px; }
+    body::after { font-size: 4rem; bottom: 12px; right: 16px; }
+}

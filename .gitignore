@@ -35,3 +35,11 @@ build/
 ### Sidecar ###
 sidecar/node_modules/
 logs/
+
+### Local / temp ###
+app.log
+app.err.log
+.diagram-config.json
+.playwright-mcp/
+diagrams/
+docs/

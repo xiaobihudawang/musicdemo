@@ -5,6 +5,7 @@ import org.example.musicdemo.common.ResultCode;
 import org.example.musicdemo.entity.Comment;
 import org.example.musicdemo.entity.Music;
 import org.example.musicdemo.service.CommentService;
+import org.example.musicdemo.service.LyricsService;
 import org.example.musicdemo.service.MusicService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ public class MusicController {
 
     private final MusicService musicService;
     private final CommentService commentService;
+    private final LyricsService lyricsService;
 
     @Value("${music.file-path}")
     private String filePath;
@@ -51,9 +53,10 @@ public class MusicController {
         ".mp4", "audio/mp4"
     ));
 
-    public MusicController(MusicService musicService, CommentService commentService) {
+    public MusicController(MusicService musicService, CommentService commentService, LyricsService lyricsService) {
         this.musicService = musicService;
         this.commentService = commentService;
+        this.lyricsService = lyricsService;
     }
 
     /** 分页获取音乐列表，支持关键词搜索 */
@@ -75,6 +78,10 @@ public class MusicController {
         if (music == null) {
             return Result.fail(ResultCode.NOT_FOUND);
         }
+        // 实时统计点赞、评论、下载数
+        music.setLikeCount(musicService.countLikes(id));
+        music.setCommentCount(musicService.countComments(id));
+        music.setDownloadCount(musicService.countDownloads(id));
         List<Comment> comments = commentService.listByMusicId(id);
         return Result.success(Map.of("music", music, "comments", comments));
     }
@@ -92,7 +99,7 @@ public class MusicController {
         } catch (RuntimeException e) {
             return Result.fail(e.getMessage());
         } catch (IOException e) {
-            return Result.fail("文件上传失败");
+            return Result.fail(ResultCode.INTERNAL_ERROR);
         }
     }
 
@@ -139,7 +146,7 @@ public class MusicController {
                 os.flush();
             }
         } catch (IOException e) {
-            response.setStatus(500);
+            response.setStatus(ResultCode.INTERNAL_ERROR.getCode());
         }
     }
 
@@ -208,8 +215,29 @@ public class MusicController {
             os.flush();
 
         } catch (IOException e) {
-            if (!response.isCommitted()) response.setStatus(500);
+            if (!response.isCommitted()) response.setStatus(ResultCode.INTERNAL_ERROR.getCode());
         }
+    }
+
+    /** 获取音乐歌词 */
+    @GetMapping("/{id}/lyrics")
+    public Result<?> getLyrics(@PathVariable Integer id) {
+        Music music = musicService.findById(id);
+        if (music == null) {
+            return Result.fail(ResultCode.NOT_FOUND);
+        }
+        return Result.success(Map.of("lyrics", music.getLyrics()));
+    }
+
+    /** 手动重新获取歌词 */
+    @PostMapping("/{id}/lyrics/regenerate")
+    public Result<?> regenerateLyrics(@PathVariable Integer id) {
+        Music music = musicService.findById(id);
+        if (music == null) {
+            return Result.fail(ResultCode.NOT_FOUND);
+        }
+        String lyrics = lyricsService.regenerateLyrics(id, music.getTitle(), music.getArtist());
+        return Result.success(Map.of("lyrics", lyrics));
     }
 
     /** 删除音乐（仅创建者或管理员可操作） */

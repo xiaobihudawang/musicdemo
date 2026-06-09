@@ -70,11 +70,4 @@ class SensitiveWordServiceTest {
         // 重复字符
         assertTrue(sensitiveWordService.containsForbidden("傻傻傻逼"));
     }
-
-    @Test
-    void findAllReturnsMatchedWords() {
-        var matched = sensitiveWordService.findAll("这歌真垃圾fuck");
-        assertFalse(matched.isEmpty());
-        assertTrue(matched.size() >= 2);
-    }
 }

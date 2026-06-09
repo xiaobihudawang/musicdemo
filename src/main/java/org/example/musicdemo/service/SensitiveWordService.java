@@ -65,15 +65,4 @@ public class SensitiveWordService {
         if (text == null || text.isEmpty()) return false;
         return sensitiveWordBs.contains(text);
     }
-
-    /**
-     * 找出文本中所有命中的敏感词，用于日志/审计。
-     *
-     * @param text 待检测文本
-     * @return 命中词列表（无命中返回空列表）
-     */
-    public List<String> findAll(String text) {
-        if (text == null || text.isEmpty()) return List.of();
-        return sensitiveWordBs.findAll(text);
-    }
 }

@@ -26,7 +26,4 @@ public interface UserMapper {
 
     /** 更新用户的启用/禁用状态（管理员操作） */
     int updateEnabled(@Param("id") Integer id, @Param("enabled") Boolean enabled);
-
-    /** 更新用户的 TOTP 密钥和启用状态 */
-    int updateTotp(@Param("id") Integer id, @Param("totpSecret") String totpSecret, @Param("totpEnabled") Boolean totpEnabled);
 }

@@ -12,9 +12,6 @@ public enum ResultCode {
     /** 操作失败（通用业务错误） */
     FAIL(400, "操作失败"),
 
-    /** 未登录或 Token 过期 */
-    UNAUTHORIZED(401, "请先登录"),
-
     /** 权限不足 */
     FORBIDDEN(403, "权限不足"),
 

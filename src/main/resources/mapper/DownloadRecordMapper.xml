@@ -42,8 +42,4 @@
         INSERT INTO download_record (user_id, music_id) VALUES (#{userId}, #{musicId})
     </insert>
 
-    <delete id="deleteByMusicId">
-        DELETE FROM download_record WHERE music_id = #{musicId}
-    </delete>
-
 </mapper>

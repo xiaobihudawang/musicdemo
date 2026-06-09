@@ -18,104 +18,74 @@ import java.util.Map;
 public class Listen1Service {
 
     private static final Logger log = LoggerFactory.getLogger(Listen1Service.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String WORKER_PATH = "sidecar" + File.separator + "listen1-worker.js";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SCRIPT = "netease_search.py";
 
-    private Map<String, Object> exec(String apiName, String params) {
-        String scriptPath = new File(System.getProperty("user.dir"), WORKER_PATH).getAbsolutePath();
-        List<String> command = new ArrayList<>();
-        command.add("node");
-        command.add(scriptPath);
-        command.add(apiName);
-        if (params != null && !params.isEmpty()) {
-            command.add(params);
-        }
+    public Listen1Service() {
+    }
 
-        log.debug("exec: command={}", command);
-
-        ProcessBuilder pb = new ProcessBuilder(command);
-        pb.redirectErrorStream(true);
-        // Ensure NODE_PATH points to sidecar node_modules
-        String nodePath = new File(System.getProperty("user.dir"), "sidecar/node_modules").getAbsolutePath();
-        pb.environment().put("NODE_PATH", nodePath);
-
+    private String exec(String... args) {
         try {
-            Process process = pb.start();
+            String scriptPath = new File(System.getProperty("user.dir"), SCRIPT).getAbsolutePath();
+            List<String> command = new ArrayList<>();
+            command.add("python");
+            command.add(scriptPath);
+            for (String arg : args) {
+                command.add(arg);
+            }
 
-            // Read all stdout
+            ProcessBuilder pb = new ProcessBuilder(command);
+            pb.environment().put("PYTHONIOENCODING", "utf-8");
+            pb.redirectErrorStream(true);
+
+            Process process = pb.start();
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    output.append(line);
+                    output.append(line).append("\n");
                 }
             }
-
-            int exitCode = process.waitFor();
-            String json = output.toString();
-
-            log.debug("exec: exitCode={}, output={}", exitCode, json.length() > 200 ? json.substring(0, 200) + "..." : json);
-
-            if (exitCode != 0 || json.isBlank()) {
-                throw new RuntimeException("listen1-worker exited with code " + exitCode + ": " + json);
-            }
-
-            Map<String, Object> result = mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
-            int code = ((Number) result.getOrDefault("code", 500)).intValue();
-            if (code != 200) {
-                String msg = (String) result.getOrDefault("message", "unknown error");
-                throw new RuntimeException("listen1 worker error: " + msg);
-            }
-
-            return result;
-
-        } catch (RuntimeException e) {
-            throw e;
+            process.waitFor();
+            return output.toString().trim();
         } catch (Exception e) {
-            throw new RuntimeException("listen1 worker failed: " + e.getMessage(), e);
+            throw new RuntimeException("python script failed: " + e.getMessage(), e);
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> search(String source, String keywords, int page) {
-        String params = "source=" + source + "&keywords=" + java.net.URLEncoder.encode(keywords, StandardCharsets.UTF_8)
-                + "&curpage=" + page;
-        Map<String, Object> resp = exec("search", params);
-        Map<String, Object> data = (Map<String, Object>) resp.get("data");
-        List<Map<String, Object>> result = (List<Map<String, Object>>) data.get("result");
-        return result != null ? result : List.of();
+        try {
+            String json = exec("search", keywords);
+            if (json == null || json.isEmpty()) return List.of();
+            List<Map<String, Object>> songs = objectMapper.readValue(json,
+                    new TypeReference<List<Map<String, Object>>>() {});
+            return songs != null ? songs : List.of();
+        } catch (Exception e) {
+            log.warn("search failed: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     public List<Map<String, Object>> showPlaylist(String source, int offset) {
-        String params = "source=" + source + "&offset=" + offset;
-        Map<String, Object> resp = exec("show_playlist", params);
-        Map<String, Object> data = (Map<String, Object>) resp.get("data");
-        List<Map<String, Object>> result = (List<Map<String, Object>>) data.get("result");
-        return result != null ? result : List.of();
+        return List.of();
     }
 
     public Map<String, Object> playlistDetail(String listId) {
-        String params = "list_id=" + listId;
-        Map<String, Object> resp = exec("playlist", params);
-        return (Map<String, Object>) resp.get("data");
+        return Map.of();
     }
 
     public String getLyric(String trackId) {
-        String params = "track_id=" + trackId;
-        Map<String, Object> resp = exec("lyric", params);
-        Map<String, Object> data = (Map<String, Object>) resp.get("data");
-        return (String) data.get("lyric");
+        try {
+            return exec("lyric", trackId);
+        } catch (Exception e) {
+            log.warn("getLyric failed for {}: {}", trackId, e.getMessage());
+            return null;
+        }
     }
 
     public String bootstrapTrack(String trackId) {
-        String params = "track_id=" + trackId;
-        try {
-            Map<String, Object> resp = exec("bootstrap_track", params);
-            Map<String, Object> data = (Map<String, Object>) resp.get("data");
-            return (String) data.get("url");
-        } catch (Exception e) {
-            log.warn("bootstrapTrack failed for {}: {}", trackId, e.getMessage());
-            return null;
-        }
+        return null;
     }
 }

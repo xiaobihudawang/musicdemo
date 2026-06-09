@@ -151,8 +151,4 @@
         UPDATE `user` SET enabled = #{enabled} WHERE id = #{id}
     </update>
 
-    <update id="updateTotp">
-        UPDATE `user` SET totp_secret = #{totpSecret}, totp_enabled = #{totpEnabled} WHERE id = #{id}
-    </update>
-
 </mapper>

@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+.playwright-mcp/
+logs/
+
+
 ### STS ###
 .apt_generated
 .classpath
@@ -32,8 +36,6 @@ build/
 ### VS Code ###
 .vscode/
 
-### Sidecar ###
-sidecar/node_modules/
 logs/
 
 ### Local / temp ###
@@ -41,5 +43,3 @@ app.log
 app.err.log
 .diagram-config.json
 .playwright-mcp/
-diagrams/
-docs/

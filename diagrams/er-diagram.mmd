@@ -1,0 +1,52 @@
+erDiagram
+    USER {
+        int id PK
+        varchar username UK
+        varchar password
+        varchar name
+        varchar email
+        varchar role
+        tinyint enabled
+        datetime create_time
+    }
+    MUSIC {
+        int id PK
+        varchar title
+        varchar artist
+        text description
+        varchar file_path
+        varchar cover_path
+        bigint file_size
+        int like_count
+        int comment_count
+        int download_count
+        int user_id FK
+        datetime create_time
+    }
+    COMMENT {
+        int id PK
+        text content
+        int user_id FK
+        int music_id FK
+        datetime create_time
+    }
+    LIKE_RECORD {
+        int id PK
+        int user_id FK
+        int music_id FK
+        datetime create_time
+    }
+    DOWNLOAD_RECORD {
+        int id PK
+        int user_id FK
+        int music_id FK
+        datetime create_time
+    }
+
+    USER ||--o{ MUSIC : "上传"
+    USER ||--o{ COMMENT : "评论"
+    MUSIC ||--o{ COMMENT : "拥有"
+    USER ||--o{ LIKE_RECORD : "点赞"
+    MUSIC ||--o{ LIKE_RECORD : "被赞"
+    USER ||--o{ DOWNLOAD_RECORD : "下载"
+    MUSIC ||--o{ DOWNLOAD_RECORD : "被下载"

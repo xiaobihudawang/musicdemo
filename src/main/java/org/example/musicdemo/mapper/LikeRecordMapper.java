@@ -16,7 +16,4 @@ public interface LikeRecordMapper {
 
     /** 查询用户是否已点赞某音乐 */
     LikeRecord findByUserAndMusic(@Param("userId") Integer userId, @Param("musicId") Integer musicId);
-
-    /** 删除某音乐的所有点赞记录（级联清理） */
-    int deleteByMusicId(@Param("musicId") Integer musicId);
 }

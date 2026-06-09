@@ -2,8 +2,6 @@ package org.example.musicdemo.controller;
 
 import org.example.musicdemo.common.Result;
 import org.example.musicdemo.service.AiService;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

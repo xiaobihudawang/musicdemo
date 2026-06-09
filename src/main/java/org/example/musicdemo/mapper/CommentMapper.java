@@ -21,7 +21,4 @@ public interface CommentMapper {
 
     /** 根据 ID 删除评论 */
     int deleteById(@Param("id") Integer id);
-
-    /** 删除某音乐的所有评论（级联清理） */
-    int deleteByMusicId(@Param("musicId") Integer musicId);
 }

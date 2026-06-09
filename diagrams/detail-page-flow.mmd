@@ -1,0 +1,28 @@
+flowchart TD
+    Start([打开 detail.html?id=24]) --> LoadDetail[loadDetail]
+    LoadDetail --> ReqDetail["MA.http.get /api/music/24"]
+    ReqDetail --> RespDetail{code === 200?}
+    RespDetail -- 否 --> ShowErr[显示 '音乐不存在']
+    RespDetail -- 是 --> HideSkel[隐藏骨架屏]
+    HideSkel --> RenderDetail[renderDetail 渲染歌曲/控件/评论]
+    RenderDetail --> BindAudio[绑定 audio 元素]
+    BindAudio --> CheckLogin{已登录?}
+    CheckLogin -- 是 --> CheckLike[checkLikeStatus]
+    CheckLogin -- 否 --> LoadLyrics
+    CheckLike --> LoadLyrics
+    LoadLyrics[loadLyrics] --> ReqLyrics["MA.http.get /api/music/24/lyrics"]
+    ReqLyrics --> HasLyrics{有歌词?}
+    HasLyrics -- 否 --> Empty[显示 '暂无歌词']
+    HasLyrics -- 是 --> ParseLRC[parseLRC 解析时间戳]
+    ParseLRC --> RenderLines[renderLyrics 生成 DOM]
+    RenderLines --> ScrollFirst[requestAnimationFrame scrollToFirstLyric]
+    ScrollFirst --> WaitPlay([等待用户点击播放])
+    WaitPlay --> Play[audio.play]
+    Play --> TimeUpdate{{audio.timeupdate 事件}}
+    TimeUpdate --> UpdateHL[updateLyricsHighlight currentTime]
+    UpdateHL --> FindIdx[倒序查找 currentLyricIndex]
+    FindIdx --> Changed{index 变化?}
+    Changed -- 否 --> TimeUpdate
+    Changed -- 是 --> ApplyClass[切换 active/passed 类]
+    ApplyClass --> ScrollTo[scrollTo 让当前行在 40% 高度]
+    ScrollTo --> TimeUpdate

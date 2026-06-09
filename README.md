@@ -12,7 +12,7 @@
 | 数据库 | MySQL 8.0 |
 | 认证 | JWT (jjwt 0.12.6), BCrypt 密码加密 |
 | 前端 | 纯 HTML/CSS/JS (无框架), Cormorant Garamond + Noto Serif SC 衬线字体 |
-| 外部集成 | listen1api (Node.js 子进程, 聚合 6 平台音乐搜索), NetEase CloudSearch (封面), Bilibili (Python 下载器) |
+| 外部集成 | NetEase CloudSearch (Python 子进程, 搜索/封面/歌词), Bilibili (Python 下载器) |
 | 构建 | Maven (mvnw wrapper), Log4j2 日志 |
 
 ---
@@ -22,9 +22,8 @@
 ### 前置条件
 
 - JDK 17+
-- Node.js (for listen1api worker)
 - MySQL 8.0
-- Python 3 (for Bilibili downloader)
+- Python 3 (for Bilibili downloader & NetEase search)
 
 ### 1. 创建数据库
 
@@ -34,21 +33,14 @@ CREATE DATABASE IF NOT EXISTS music_platform DEFAULT CHARACTER SET utf8mb4;
 
 手动执行 `schema.sql` 创建 5 张表：`user`, `music`, `comment`, `like_record`, `download_record`。
 
-### 2. 安装 Node.js 依赖
-
-```bash
-cd sidecar
-npm install
-```
-
-### 3. 配置 `application.yml`
+### 2. 配置 `application.yml`
 
 编辑 `src/main/resources/application.yml`：
 - 修改 `spring.datasource` 的 MySQL 连接信息（用户名/密码）
 - 确认 `music.file-path`（音乐文件存储路径，默认 `D:/workspace/music/`）
 - 可选：配置 `ai.deepseek.api-key`（用于 AI 生成音乐简介，从环境变量 `ANTHROPIC_AUTH_TOKEN` 读取）
 
-### 4. 启动
+### 3. 启动
 
 ```bash
 mvnw.cmd spring-boot:run
@@ -101,7 +93,7 @@ musicdemo/
 │       ├── CommentService.java
 │       ├── LikeService.java
 │       ├── RankingService.java
-│       ├── Listen1Service.java      Node.js 子进程代理
+│       ├── Listen1Service.java      Python 子进程代理 (netease_search.py)
 │       ├── CoverService.java       多源封面搜索下载
 │       ├── BilibiliService.java     Python 子进程
 │       └── AiService.java          DeepSeek API 调用
@@ -117,17 +109,27 @@ musicdemo/
 │       ├── bilibili.html          B 站音频下载
 │       ├── login.html / register.html  登录/注册
 │       ├── admin/users.html / music.html  管理后台
-│       ├── css/style.css          纸质感主题样式表
-│       └── js/api.js / common.js  HTTP 封装 + 导航栏/工具函数
-├── sidecar/                  # 外部脚本
-│   ├── listen1-worker.js          listen1api 子进程入口
-│   ├── listen1-api.min.js         聚合 6 平台 API 库
-│   ├── listen1-server.js          (备选) 服务器模式
-│   ├── netease-search.js          独立 NetEase 搜索
-│   ├── package.json / node_modules/
-│   ├── test-search.js
-│   └── public/
-└── schema.sql / data.sql
+│       ├── css/
+│       │   ├── base.css           重置 / 变量 / 基础排版
+│       │   ├── layout.css         页面级布局（navbar / 容器 / 分页）
+│       │   ├── components.css     通用组件（btn / card / form / toast / skeleton / track-list / rank / table / file-upload / comment / tabs）
+│       │   └── player.css         详情页播放器（player-* / lyrics-* / btn-player / comments-section）
+│       └── js/
+│           ├── common.js          认证 / 提示 / 格式化 / navbar / loading
+│           ├── api.js             get/post/put/del/postForm
+│           ├── app.js             DOMContentLoaded 入口
+│           └── pages/             各页面逻辑 (index/login/register/detail/upload/ranking/bilibili/admin)
+├── scripts/                 # 辅助脚本
+│   ├── bilibili_demo.py         B站音频下载 (Python)
+│   └── netease_search.py        网易云搜索/封面/歌词 (Python)
+├── docs/                    # 项目文档
+│   ├── 功能实现文档.md
+│   ├── 音乐分享平台-详细开发教程.md
+│   ├── 音乐分享平台-详细开发教程-第二部分.md
+│   ├── USAGE.md
+│   ├── defense-keypoints.md
+│   └── frontend-tutorial.md
+└── .gitignore
 ```
 
 ---
@@ -230,19 +232,19 @@ Anthropic 纸质感风格 (参考 `样板.html`):
 
 ## 外部集成
 
-### listen1api (音乐搜索)
-- 聚合 NetEase、QQ、Kugou、Kuwo、Migu、Baidu、Xiami 7 个平台的音乐搜索
-- 通过 `ProcessBuilder` 以子进程方式调用 `node sidecar/listen1-worker.js`
-- 每个请求独立进程，无状态，退出后自动回收
+### 网易云音乐搜索 (NetEase CloudSearch)
+- 通过 `netease_search.py` Python 脚本搜索网易云音乐
+- 支持搜索、封面获取、歌词获取
+- 通过 `ProcessBuilder` 以子进程方式调用
 
 ### 封面自动搜索 (CoverService)
 - 上传音乐时自动获取封面图
-- 优先使用 NetEase CloudSearch (`netease-search.js`)，6 个备用源兜底
+- 优先使用 NetEase CloudSearch (`netease_search.py`)，6 个备用源兜底
 - 下载至 `covers/{uuid}.jpg`，路径存入 `music.cover_path`
 - WebConfig 将 `/api/music/cover/**` 映射至文件系统
 
 ### Bilibili 音频下载
-- `bilibili_demo.py` Python 脚本
+- `scripts/bilibili_demo.py` Python 脚本
 - `BilibiliService` 通过 `ProcessBuilder` 调用，下载音频文件
 
 ### AI 简介生成

@@ -99,8 +99,4 @@
         SELECT * FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
     </select>
 
-    <delete id="deleteByMusicId">
-        DELETE FROM like_record WHERE music_id = #{musicId}
-    </delete>
-
 </mapper>

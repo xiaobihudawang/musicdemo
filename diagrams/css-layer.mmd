@@ -1,0 +1,10 @@
+flowchart LR
+    subgraph CSS[CSS 分层]
+      BASE["base.css<br/>:root 变量<br/>reset<br/>@keyframes"]
+      LAYOUT["layout.css<br/>navbar<br/>.container<br/>.container-fluid<br/>page-header<br/>search-bar<br/>pagination<br/>loading-overlay<br/>auth-container"]
+      COMP["components.css<br/>.btn / .card / .form-group<br/>.track / .comment / .tabs<br/>.rank-item / .file-upload / .table<br/>.toast / .skeleton"]
+      PLAYER["player.css<br/>.player-page / .player-main<br/>.player-left / .player-right<br/>.player-cover / .player-info<br/>.lyrics-panel / .lyrics-viewport<br/>.lyrics-line / .lyrics-container"]
+    end
+    BASE --> LAYOUT
+    LAYOUT --> COMP
+    COMP --> PLAYER

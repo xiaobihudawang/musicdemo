@@ -1,7 +1,5 @@
 package org.example.musicdemo.service;
 
-import org.example.musicdemo.entity.Music;
-import org.example.musicdemo.mapper.MusicMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,11 +26,9 @@ public class AiService {
     private String apiUrl;
 
     private final RestTemplate restTemplate;
-    private final MusicMapper musicMapper;
 
-    public AiService(MusicMapper musicMapper) {
+    public AiService() {
         this.restTemplate = new RestTemplate();
-        this.musicMapper = musicMapper;
     }
 
     /** 根据歌曲标题和歌手生成 30~80 字中文简介 */

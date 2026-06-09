@@ -110,8 +110,4 @@
         DELETE FROM comment WHERE id = #{id}
     </delete>
 
-    <delete id="deleteByMusicId">
-        DELETE FROM comment WHERE music_id = #{musicId}
-    </delete>
-
 </mapper>

@@ -1,0 +1,15 @@
+flowchart TD
+    HTML["HTML 页面<br/>(detail.html 等)"] --> CSS1["base.css<br/>变量/reset/动画"]
+    CSS1 --> CSS2["layout.css<br/>navbar/container"]
+    CSS2 --> CSS3["components.css<br/>btn/card/form/track"]
+    CSS3 --> CSS4["player.css<br/>详情页专用"]
+    HTML --> JS1["core/auth.js<br/>Token 登录态"]
+    JS1 --> JS2["core/http.js<br/>fetch 封装"]
+    JS2 --> JS3["core/toast.js<br/>顶部提示"]
+    JS3 --> JS4["utils/format.js<br/>日期/大小/escape"]
+    JS4 --> JS5["components/navbar.js"]
+    JS5 --> JS6["components/loading.js"]
+    JS6 --> JS7["pages/*.js<br/>当前页面逻辑"]
+    JS7 --> JS8["app.js<br/>DOMContentLoaded 启动"]
+    JS8 -. DOMContentLoaded .-> JS7
+    JS8 -. DOMContentLoaded .-> JS6

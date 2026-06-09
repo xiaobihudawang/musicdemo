@@ -20,7 +20,7 @@ import java.util.List;
 public class LyricsService {
 
     private static final Logger log = LoggerFactory.getLogger(LyricsService.class);
-    private static final String SCRIPT = "netease_search.py";
+    private static final String SCRIPT = "scripts/netease_search.py";
 
     private final MusicMapper musicMapper;
 

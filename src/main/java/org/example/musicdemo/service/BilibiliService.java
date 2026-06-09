@@ -54,12 +54,12 @@ public class BilibiliService {
 
     /**
      * 根据 BV 号调用 Python 脚本获取音频信息。
-     * 脚本位于项目根目录 {user.dir}/bilibili_demo.py。
+     * 脚本位于项目根目录 {user.dir}/scripts/bilibili_demo.py。
      */
     public AudioInfo getAudioInfo(String bvid) throws Exception {
         log.info("getAudioInfo 开始: bvid=[{}]", bvid);
 
-        String scriptPath = new File(System.getProperty("user.dir"), "bilibili_demo.py").getAbsolutePath();
+        String scriptPath = new File(System.getProperty("user.dir"), "scripts/bilibili_demo.py").getAbsolutePath();
         List<String> command = new ArrayList<>();
         command.add("python");
         command.add(scriptPath);

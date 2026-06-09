@@ -23,7 +23,7 @@ public class CoverService {
 
     private static final Logger log = LoggerFactory.getLogger(CoverService.class);
     private static final String COVERS_DIR = "covers/";
-    private static final String SCRIPT = "netease_search.py";
+    private static final String SCRIPT = "scripts/netease_search.py";
 
     private final MusicMapper musicMapper;
 

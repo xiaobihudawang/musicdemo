@@ -30,7 +30,7 @@
     color: var(--text-muted);
     padding: 8px 14px;
     border-radius: 6px;
-    transition: all 0.2s;
+    /* 过渡已移除 */
     font-size: 13px;
     font-family: 'Noto Serif SC', serif;
 }
@@ -51,7 +51,7 @@
     cursor: pointer;
     font-size: 12px;
     font-family: 'Noto Serif SC', serif;
-    transition: all 0.2s;
+    /* 过渡已移除 */
 }
 .navbar .btn-logout:hover { background: var(--bg); color: var(--text-primary); }
 
@@ -90,8 +90,7 @@
     margin-bottom: 40px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
-    opacity: 0;
-    animation: fadeUp 0.6s ease forwards;
+    /* 动画已移除 */
 }
 .page-header h1 {
     font-family: 'Cormorant Garamond', serif;
@@ -115,8 +114,7 @@
     display: flex;
     gap: 10px;
     margin-bottom: 36px;
-    opacity: 0;
-    animation: fadeUp 0.6s ease 0.1s forwards;
+    /* 动画已移除 */
 }
 .search-bar input {
     flex: 1;
@@ -127,7 +125,7 @@
     background: var(--surface);
     color: var(--text-primary);
     font-family: 'Noto Serif SC', serif;
-    transition: all 0.2s;
+    /* 过渡已移除 */
     box-shadow: var(--shadow);
 }
 .search-bar input::placeholder { color: var(--text-dim); font-style: italic; }
@@ -140,7 +138,7 @@
     background: var(--surface);
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.2s;
+    /* 过渡已移除 */
     box-shadow: var(--shadow);
 }
 .search-bar .btn-search:hover { border-color: var(--accent); color: var(--accent); }
@@ -154,8 +152,7 @@
     align-items: center;
     gap: 4px;
     margin-top: 52px;
-    opacity: 0;
-    animation: fadeUp 0.5s ease 0.5s forwards;
+    /* 动画已移除 */
 }
 .page-btn {
     min-width: 34px; height: 34px;
@@ -168,7 +165,7 @@
     font-weight: 600;
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.2s ease;
+    /* 过渡已移除 */
 }
 .page-btn:hover { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow); }
 .page-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(139,105,20,0.2); }
@@ -180,7 +177,7 @@
     font-size: 1rem;
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.2s ease;
+    /* 过渡已移除 */
 }
 .page-arrow:hover { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow); }
 .page-arrow:disabled { opacity: 0.3; cursor: default; }
@@ -196,14 +193,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.5s ease;
+    /* 过渡已移除 */
 }
 .loading-overlay img {
     width: 56px; height: auto;
-    animation: loadingPulse 1.5s ease-in-out infinite;
+    /* 动画已移除 */
     opacity: 0.5;
 }
-.loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+.loading-overlay.fade-out { display: none; }
 
 /* ===========================================================
    Auth 登录/注册页面
@@ -251,7 +248,7 @@ body.auth-page {
     background: var(--surface);
     color: var(--text-primary);
     font-family: 'Noto Serif SC', serif;
-    transition: all 0.2s;
+    /* 过渡已移除 */
     outline: none;
     box-shadow: var(--shadow);
 }
@@ -265,7 +262,6 @@ body.auth-page {
 .auth-container .form-group input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--text-primary);
     -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset;
-    transition: background-color 5000s ease-in-out 0s;
     border-color: var(--border);
 }
 .auth-container .form-actions { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
@@ -274,11 +270,11 @@ body.auth-page {
     background: var(--text-primary); color: #fff;
     border: none; border-radius: var(--radius);
     font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: all 0.2s ease;
+    cursor: pointer; /* 过渡已移除 */
     font-family: 'Noto Serif SC', serif;
 }
 .auth-container .btn-primary:hover { background: #1a1713; }
-.auth-container .form-actions a { text-align: center; color: var(--text-muted); font-size: 13px; text-decoration: none; transition: all 0.2s; padding: 4px 0; }
+.auth-container .form-actions a { text-align: center; color: var(--text-muted); font-size: 13px;     text-decoration: none; /* 过渡已移除 */ padding: 4px 0; }
 .auth-container .form-actions a:hover { color: var(--accent); }
 .auth-container .checkbox-label { display:flex !important; align-items:center; gap:8px; font-weight:normal !important; font-size:13px; color:var(--text-muted) !important; cursor:pointer; user-select:none; }
 .auth-container .checkbox-label input[type="checkbox"] { width:auto !important; cursor:pointer; accent-color:var(--accent); }

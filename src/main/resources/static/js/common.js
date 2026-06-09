@@ -173,15 +173,5 @@ const PAGE_LOAD_TS = performance.now();
 function fadeOutLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (!overlay) return;
-
-    const minDuration = 1200;
-    const elapsed = performance.now() - PAGE_LOAD_TS;
-    const remaining = Math.max(0, minDuration - elapsed);
-
-    setTimeout(() => {
-        overlay.classList.add('fade-out');
-        setTimeout(() => {
-            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        }, 600);
-    }, remaining);
+    overlay.style.display = 'none';
 }

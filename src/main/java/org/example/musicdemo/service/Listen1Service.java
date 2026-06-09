@@ -19,7 +19,7 @@ public class Listen1Service {
 
     private static final Logger log = LoggerFactory.getLogger(Listen1Service.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String SCRIPT = "netease_search.py";
+    private static final String SCRIPT = "scripts/netease_search.py";
 
     public Listen1Service() {
     }

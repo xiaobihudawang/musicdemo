@@ -77,10 +77,6 @@ public class MusicController {
         if (music == null) {
             return Result.fail(ResultCode.NOT_FOUND);
         }
-        // 实时统计点赞、评论、下载数
-        music.setLikeCount(musicService.countLikes(id));
-        music.setCommentCount(musicService.countComments(id));
-        music.setDownloadCount(musicService.countDownloads(id));
         List<Comment> comments = commentService.listByMusicId(id);
         return Result.success(Map.of("music", music, "comments", comments));
     }

@@ -14,8 +14,6 @@
     padding: 24px;
     margin-bottom: 24px;
     box-shadow: var(--shadow);
-    opacity: 0;
-    animation: fadeUp 0.6s ease 0.15s forwards;
 }
 .lyrics-header {
     display: flex;
@@ -46,7 +44,7 @@
     color: var(--text-muted);
     font-size: 0.9rem;
     line-height: 1.8;
-    transition: all 0.3s ease;
+    transition: none;
     border-radius: 4px;
     cursor: pointer;
 }
@@ -97,12 +95,11 @@
     padding: 6px 10px;
     margin-bottom: 12px;
     border-radius: 6px;
-    transition: all 0.2s;
+    /* 过渡已移除 */
     align-self: flex-start;
 }
 .player-back:hover { background: var(--surface); color: var(--text-primary); }
-.player-back svg { transition: transform 0.2s; }
-.player-back:hover svg { transform: translateX(-2px); }
+.player-back:hover svg { /* 过渡已移除 */ }
 
 .player-main {
     flex: 1;
@@ -115,8 +112,6 @@
     border-radius: 12px 12px 0 0;
     overflow: hidden;
     box-shadow: var(--shadow);
-    opacity: 0;
-    animation: fadeUp 0.6s ease forwards;
     min-height: 580px;
 }
 
@@ -229,7 +224,7 @@
     cursor: pointer;
     font-size: 12px;
     font-family: 'Noto Serif SC', serif;
-    transition: all 0.2s;
+    /* 过渡已移除 */
 }
 .btn-player:hover { background: #fff; color: var(--text-primary); border-color: var(--accent); }
 .btn-player-active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
@@ -267,7 +262,6 @@
     padding: 0;
     margin: 0;
     box-shadow: none;
-    animation: none;
     opacity: 1;
 }
 .player-right .lyrics-header {
@@ -294,12 +288,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    /* 过渡已移除 */
 }
 .btn-icon:hover {
     border-color: var(--accent);
     color: var(--accent);
-    transform: rotate(180deg);
 }
 
 /* 歌词视口 */
@@ -324,7 +317,7 @@
     color: var(--text-dim);
     font-size: 0.95rem;
     line-height: 1.9;
-    transition: color 0.4s ease, font-size 0.4s ease, transform 0.4s ease, opacity 0.4s ease;
+    transition: none;
     display: block;
     text-align: center;
     cursor: pointer;
@@ -334,7 +327,6 @@
     color: var(--accent);
     font-weight: 600;
     font-size: 1.1rem;
-    transform: scale(1.03);
 }
 .lyrics-line.passed {
     color: var(--text-muted);

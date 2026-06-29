@@ -218,7 +218,7 @@ musicdemo/
 
 ## 前端设计
 
-Anthropic 纸质感风格 (参考 `样板.html`):
+Anthropic 纸质感风格 (答辩简化版，无动画/过渡效果):
 - **底色** `#f5f0e6` + SVG 噪点纹理 (`feTurbulence opacity: 0.03`)
 - **字体** `Cormorant Garamond` (英文衬线) + `Noto Serif SC` (中文衬线)
 - **文字色** `#2c2821` 深棕墨水色
@@ -227,6 +227,7 @@ Anthropic 纸质感风格 (参考 `样板.html`):
 - **布局** 800px 窄版居中，大量留白
 - **水印** 右下角固定 `MUSIC` 文字，`opacity: 0.025`
 - **卡片** `#faf8f5` 暖白表面，`#e0d8cc` 边框
+- **简化** 已移除所有 CSS 动画 (keyframes)、过渡效果 (transition)、骨架屏 shimmer 动画、加载遮罩淡出效果
 
 ---
 

@@ -33,7 +33,7 @@ mysql -uroot -p963369Lbc music_platform < backup\music_platform_20260701.sql
 ## 三、导入样本数据
 
 ```bash
-mysql -uroot -p963369Lbc music_platform < src\main\resources\data.sql
+mysql -uroot -p963369Lbc music_platform < src\main\resources\sample-data.sql
 ```
 
 这会创建一个管理员账号（admin/admin123）和 10 首示例音乐。
@@ -50,7 +50,7 @@ mysql -uroot -p -e "CREATE DATABASE music_platform DEFAULT CHARACTER SET utf8mb4
 mysql -uroot -p music_platform < src\main\resources\schema.sql
 
 # 3. 可选：导入样本数据
-mysql -uroot -p music_platform < src\main\resources\data.sql
+mysql -uroot -p music_platform < src\main\resources\sample-data.sql
 
 # 4. 启动应用
 mvnw.cmd spring-boot:run

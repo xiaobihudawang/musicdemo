@@ -1,0 +1,70 @@
+@startuml
+!define table(x) class x << (T,#FFEEEE) >>
+
+title 音乐分享平台 ER 图
+
+table(user) {
+  + id: INT (PK)
+  --
+  username: VARCHAR(255) (UK)
+  password: VARCHAR(255)
+  name: VARCHAR(255)
+  email: VARCHAR(255)
+  role: VARCHAR(50)
+  enabled: TINYINT(1)
+  create_time: DATETIME
+}
+
+table(music) {
+  + id: INT (PK)
+  --
+  title: VARCHAR(255)
+  artist: VARCHAR(255)
+  description: VARCHAR(2000)
+  file_path: VARCHAR(500)
+  cover_path: VARCHAR(500)
+  file_size: BIGINT
+  lyrics: TEXT
+  like_count: INT (冗余)
+  comment_count: INT (冗余)
+  download_count: INT (冗余)
+  user_id: INT (FK)
+  create_time: DATETIME
+}
+
+table(comment) {
+  + id: INT (PK)
+  --
+  content: VARCHAR(2000)
+  user_id: INT (FK)
+  music_id: INT (FK) [CASCADE]
+  create_time: DATETIME
+}
+
+table(like_record) {
+  + id: INT (PK)
+  --
+  user_id: INT (FK)
+  music_id: INT (FK) [CASCADE]
+  create_time: DATETIME
+  --
+  UK(user_id, music_id)
+}
+
+table(download_record) {
+  + id: INT (PK)
+  --
+  user_id: INT (FK)
+  music_id: INT (FK) [CASCADE]
+  create_time: DATETIME
+}
+
+user ||--o{ music : "上传"
+user ||--o{ comment : "评论"
+user ||--o{ like_record : "点赞"
+user ||--o{ download_record : "下载"
+music ||--o{ comment : "拥有"
+music ||--o{ like_record : "被赞"
+music ||--o{ download_record : "被下载"
+
+@enduml

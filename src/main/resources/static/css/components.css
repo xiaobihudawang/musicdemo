@@ -24,6 +24,8 @@
 .btn-primary:hover { background: #1a1713; border-color: #1a1713; }
 .btn-danger { background: #c0392b; color: #fff; border-color: #c0392b; }
 .btn-danger:hover { background: #a93226; }
+.btn-danger-outline { background: transparent; color: #c0392b; border-color: #c0392b; }
+.btn-danger-outline:hover { background: #c0392b; color: #fff; }
 .btn-success { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
 .btn-default { background: var(--surface); color: var(--text-muted); box-shadow: var(--shadow); }
 .btn-default:hover { background: var(--bg); color: var(--text-primary); }
@@ -140,15 +142,6 @@
     /* 过渡已移除 */
 }
 .track:hover .track-cover img { transform: scale(1.08); }
-.track-cover .placeholder {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--accent-light);
-    color: var(--accent);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
-    font-style: italic;
-}
 .track-meta { flex: 1; min-width: 0; }
 .track-title {
     font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;

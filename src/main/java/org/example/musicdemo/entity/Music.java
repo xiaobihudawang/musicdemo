@@ -28,10 +28,10 @@ public class Music {
     private LocalDateTime createTime;
     /** 上传用户昵称（非数据库字段，通过 JOIN user 表获取） */
     private String username;
-    /** 点赞数（非数据库字段，通过 like_record 表统计） */
+    /** 点赞数（反范式冗余字段，由触发器自动维护） */
     private Integer likeCount;
-    /** 评论数（非数据库字段，通过 comment 表统计） */
+    /** 评论数（反范式冗余字段，由触发器自动维护） */
     private Integer commentCount;
-    /** 下载数（非数据库字段，通过 download_record 表统计） */
+    /** 下载数（反范式冗余字段，由触发器自动维护） */
     private Integer downloadCount;
 }

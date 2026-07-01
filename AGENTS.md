@@ -67,9 +67,15 @@ static/
 
 ## Implementation Status
 
-**Done**: UserMapper, UserService, AuthController, all 5 entities + schemas, config classes, all 5 controllers (Auth/Music/Comment/Like/Ranking/Admin/Bilibili/Ai/Listen1), all HTML pages (login/register/index/detail/upload/ranking/bilibili/admin), all page JS.
+**Done**: UserMapper, UserService, AuthController, all 5 entities + schemas, config classes, all 8 controllers (Auth/Music/Comment/Like/Ranking/Admin/Bilibili/Ai), all HTML pages (login/register/index/detail/upload/ranking/bilibili/admin), all page JS.
 
-**Not yet implemented**: MusicMapper / CommentMapper / LikeRecordMapper / DownloadRecordMapper (interfaces + XML), MusicService, CommentService, LikeService, RankingService.
+**All implemented**: MusicMapper, CommentMapper, LikeRecordMapper, DownloadRecordMapper (interfaces + XML), MusicService, CommentService, LikeService, RankingService.
 
 ## Test
-Only `MusicdemoApplicationTests` with `@SpringBootTest` context-loads test. No meaningful tests exist yet.
+- `MusicdemoApplicationTests` — @SpringBootTest context-loads test
+- `UserServiceTest` — 9 Mockito unit tests (UserService)
+- `MusicServiceTest` — 9 Mockito unit tests (MusicService)
+- `CommentServiceTest` — 6 Mockito unit tests (CommentService)
+- `LikeServiceTest` — 4 Mockito unit tests (LikeService)
+- `RankingServiceTest` — 3 Mockito unit tests (RankingService)
+- `SensitiveWordServiceTest` — 7 @SpringBootTest integration tests

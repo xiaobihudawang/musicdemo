@@ -28,6 +28,11 @@ public class UserService {
         return userMapper.findByUsername(username);
     }
 
+    /** 根据 ID 查询用户 */
+    public User findById(Integer id) {
+        return userMapper.findById(id);
+    }
+
     /** 用户注册（密码 BCrypt 加密，检测用户名唯一性） */
     @Transactional
     public User register(String username, String password, String name, String email) {
@@ -61,5 +66,11 @@ public class UserService {
     @Transactional
     public void toggleEnabled(Integer id, Boolean enabled) {
         userMapper.updateEnabled(id, enabled);
+    }
+
+    /** 删除用户（使用存储过程级联删除所有关联数据） */
+    @Transactional
+    public void deleteById(Integer id) {
+        userMapper.batchDeleteUser(id);
     }
 }

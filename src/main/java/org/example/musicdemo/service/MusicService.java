@@ -58,21 +58,6 @@ public class MusicService {
         return musicMapper.findById(id);
     }
 
-    /** 统计歌曲的点赞数 */
-    public int countLikes(Integer id) {
-        return musicMapper.countLikes(id);
-    }
-
-    /** 统计歌曲的评论数 */
-    public int countComments(Integer id) {
-        return musicMapper.countComments(id);
-    }
-
-    /** 统计歌曲的下载数 */
-    public int countDownloads(Integer id) {
-        return musicMapper.countDownloads(id);
-    }
-
     /** 允许上传的文件扩展名白名单 */
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".mp3", ".flac", ".wav", ".aac", ".ogg", ".m4a", ".mp4");
 
@@ -159,7 +144,8 @@ public class MusicService {
 
     /**
      * 记录下载行为。
-     * 不再维护冗余计数字段，下载数通过 download_record 表实时统计。
+     * 插入下载记录后，music.download_count 由数据库触发器自动 +1。
+     * 返回的 Music 对象包含触发后的最新计数值。
      */
     @Transactional
     public Music download(Integer musicId, Integer userId) {
@@ -173,6 +159,6 @@ public class MusicService {
         record.setMusicId(musicId);
         downloadRecordMapper.insert(record);
 
-        return music;
+        return musicMapper.findById(musicId);
     }
 }

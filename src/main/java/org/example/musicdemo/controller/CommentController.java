@@ -8,10 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
- * 评论控制器，处理音乐评论的查询、添加和删除。
+ * 评论控制器，处理音乐评论的添加和删除。
  * 所有端点以 /api 开头。
  */
 @RestController
@@ -24,16 +22,13 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    /** 获取指定音乐的所有评论 */
-    @GetMapping("/music/{id}/comments")
-    public Result<?> list(@PathVariable Integer id) {
-        List<Comment> comments = commentService.listByMusicId(id);
-        return Result.success(comments);
-    }
-
     /** 为指定音乐添加评论（需登录） */
     @PostMapping("/music/{id}/comments")
     public Result<?> add(@PathVariable Integer id, @RequestBody Comment comment) {
+        String content = comment.getContent();
+        if (content == null || content.trim().isEmpty()) {
+            return Result.fail("评论内容不能为空");
+        }
         comment.setMusicId(id);
         comment.setUserId(getCurrentUserId());
         return Result.success(commentService.add(comment));
@@ -54,7 +49,7 @@ public class CommentController {
             return Result.fail(ResultCode.FORBIDDEN);
         }
 
-        commentService.delete(id, comment.getMusicId());
+        commentService.delete(id);
         return Result.success();
     }
 

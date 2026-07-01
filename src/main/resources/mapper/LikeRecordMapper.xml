@@ -99,4 +99,5 @@
         SELECT * FROM like_record WHERE user_id = #{userId} AND music_id = #{musicId}
     </select>
 
+
 </mapper>

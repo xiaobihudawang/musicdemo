@@ -1,0 +1,40 @@
+@startuml
+title 详情页加载与歌词同步流程
+
+start
+:打开 detail.html?id=24;
+:loadDetail();
+:get(/api/music/24);
+if (code === 200?) then (否)
+  :显示 "音乐不存在";
+  stop
+else (是)
+  :隐藏骨架屏;
+  :renderDetail(歌曲/控件/评论);
+  :绑定 audio 元素;
+  if (已登录?) then (是)
+    :checkLikeStatus();
+  endif
+  :loadLyrics();
+  :get(/api/music/24/lyrics);
+  if (有歌词?) then (否)
+    :显示 "暂无歌词";
+  else (是)
+    :parseLRC() 解析时间戳;
+    :renderLyrics() 生成 DOM;
+    :scrollToFirstLyric();
+  endif
+  :等待用户点击播放;
+  :audio.play();
+  while (播放中) is (audio.timeupdate)
+    :updateLyricsHighlight(currentTime);
+    :倒序查找 currentLyricIndex;
+    if (index 变化?) then (是)
+      :切换 active/passed 类;
+      :scrollTo(当前行在 40% 高度);
+    endif
+  endwhile
+  stop
+endif
+
+@enduml

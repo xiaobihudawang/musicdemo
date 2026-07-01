@@ -37,13 +37,21 @@ function renderAdminUsers(users) {
                 ? '<span style="color:#67C23A;">启用</span>'
                 : '<span style="color:#F56C6C;">禁用</span>'}</td>
             <td>${formatDate(u.createTime)}</td>
-            <td>
+            <td style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-sm ${u.enabled ? 'btn-danger' : 'btn-success'}"
                         data-action="toggle-status"
                         data-id="${u.id}"
                         data-next-enabled="${!u.enabled}">
                     ${u.enabled ? '禁用' : '启用'}
                 </button>
+                ${u.username !== 'admin'
+                    ? `<button class="btn btn-sm btn-danger-outline"
+                              data-action="delete-user"
+                              data-id="${u.id}"
+                              data-username="${escapeHtml(u.username)}">
+                        删除
+                       </button>`
+                    : ''}
             </td>
         </tr>
     `).join('');
@@ -92,15 +100,41 @@ async function toggleUserStatus(id, enabled, btn) {
     }
 }
 
+async function deleteUser(id, username, btn) {
+    if (!confirm(`确定删除用户「${username}」吗？此操作不可撤销！`)) {
+        if (btn) { btn.disabled = false; }
+        return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = '删除中...'; }
+
+    const res = await del('/api/admin/users/' + id);
+
+    if (res && res.code === 200) {
+        showToast('用户已删除', 'success');
+        loadAdminUsers();
+    } else {
+        showToast((res && res.message) || '删除失败', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = '删除'; }
+    }
+}
+
 /**
- * 事件委托：处理"启用/禁用"按钮点击。
+ * 事件委托：处理按钮点击。
  */
 document.addEventListener('click', function (e) {
-    const btn = e.target.closest('button[data-action="toggle-status"]');
-    if (!btn) return;
-    const id = parseInt(btn.dataset.id);
-    const enabled = btn.dataset.nextEnabled === 'true';
-    toggleUserStatus(id, enabled, btn);
+    const toggleBtn = e.target.closest('button[data-action="toggle-status"]');
+    if (toggleBtn) {
+        const id = parseInt(toggleBtn.dataset.id);
+        const enabled = toggleBtn.dataset.nextEnabled === 'true';
+        toggleUserStatus(id, enabled, toggleBtn);
+        return;
+    }
+    const deleteBtn = e.target.closest('button[data-action="delete-user"]');
+    if (deleteBtn) {
+        const id = parseInt(deleteBtn.dataset.id);
+        const username = deleteBtn.dataset.username;
+        deleteUser(id, username, deleteBtn);
+    }
 });
 
 function init() { if (guard()) loadAdminUsers(); }

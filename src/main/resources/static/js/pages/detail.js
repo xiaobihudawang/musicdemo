@@ -163,8 +163,7 @@ function updateLikeButton() {
 
 function renderDetail(music, comments) {
     const container = document.getElementById('detailContent');
-    const coverUrl = music.coverPath ? `/api/music/cover/${music.coverPath}` : null;
-    const hasCover = !!coverUrl;
+    const coverUrl = music.coverPath ? `/api/music/cover/${music.coverPath}` : '/video/logo.png';
     const canManage = isLogined() && (getUserRole() === 'admin' || currentUserId === music.userId);
     const isAdmin = getUserRole() === 'admin';
 
@@ -178,10 +177,8 @@ function renderDetail(music, comments) {
             <div class="player-main">
                 <div class="player-left">
                     <div class="player-cover-wrap">
-                        <div class="player-cover ${hasCover ? '' : 'no-cover'}">
-                            ${hasCover
-                                ? `<img src="${coverUrl}" alt="${escapeHtml(music.title)}">`
-                                : `<div class="cover-placeholder">♪</div>`}
+                        <div class="player-cover">
+                            <img src="${coverUrl}" alt="${escapeHtml(music.title)}">
                         </div>
                     </div>
 
@@ -217,7 +214,7 @@ function renderDetail(music, comments) {
                     <div class="lyrics-panel">
                         <div class="lyrics-header">
                             <span class="lyrics-title">歌词</span>
-                            <button class="btn-icon" onclick="regenerateLyrics()" title="重新获取歌词">🔄</button>
+                            ${isAdmin ? '<button class="btn-icon" onclick="regenerateLyrics()" title="重新获取歌词">🔄</button>' : ''}
                         </div>
                         <div class="lyrics-viewport">
                             <div class="lyrics-container" id="lyricsContent">
@@ -280,10 +277,7 @@ function renderCommentItem(c, isAdmin) {
 
 async function toggleLike() {
     if (!isLogined()) { showToast('请先登录', 'error'); return; }
-    const btn = document.getElementById('likeBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
     const res = await post('/api/music/' + musicId + '/like');
-    if (btn) { btn.disabled = false; }
     if (res && res.code === 200) {
         liked = !!res.data.liked;
         updateLikeButton();

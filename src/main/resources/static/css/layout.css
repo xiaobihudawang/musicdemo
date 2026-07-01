@@ -1,7 +1,7 @@
 /* ===========================================================
    layout.css
    页面布局：navbar、container、page-header、search-bar、
-   pagination、loading-overlay、auth-container
+   pagination、auth-container
    加载顺序：第二个（依赖 base.css 的变量）
    =========================================================== */
 
@@ -182,25 +182,6 @@
 .page-arrow:hover { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow); }
 .page-arrow:disabled { opacity: 0.3; cursor: default; }
 .page-arrow:disabled:hover { background: transparent; box-shadow: none; color: var(--text-muted); }
-
-/* ===========================================================
-   Loading Overlay 全屏加载遮罩
-   =========================================================== */
-.loading-overlay {
-    position: fixed; inset: 0;
-    z-index: 10000;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* 过渡已移除 */
-}
-.loading-overlay img {
-    width: 56px; height: auto;
-    /* 动画已移除 */
-    opacity: 0.5;
-}
-.loading-overlay.fade-out { display: none; }
 
 /* ===========================================================
    Auth 登录/注册页面

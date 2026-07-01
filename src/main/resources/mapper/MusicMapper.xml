@@ -8,16 +8,16 @@
 
   对应 Java 接口：org.example.musicdemo.mapper.MusicMapper
   数据库表：music（歌曲主表）
-  关联表：user（用户表，用于关联查询上传者用户名）、
-          like_record（点赞记录表，用于排行榜）、
-          download_record（下载记录表，用于排行榜）、
-          comment（评论表，用于排行榜）
+  关联表：user（用户表，用于关联查询上传者用户名）
+
+  计数说明：
+    like_count / comment_count / download_count 是 music 表的反范式冗余字段，
+    由数据库触发器在插入/删除关联记录时自动更新，无需在 Java 层面维护。
 
   核心功能：
     1. 歌曲 CRUD（增删查）
     2. 分页 + 关键字模糊搜索
-    3. 点赞数 / 评论数 / 下载数的原子性增减
-    4. 本周三大排行榜 TOP10（点赞榜、下载榜、评论榜）
+    3. 本周三大排行榜 TOP10（点赞榜、下载榜、评论榜）
   ========================================================================
 -->
 
@@ -87,10 +87,7 @@
         比直接在 Java 代码中拼接 % 更安全（MyBatis 会预编译参数）
     -->
     <select id="findList" resultMap="musicMap">
-        SELECT m.*, u.username,
-            (SELECT COUNT(*) FROM like_record WHERE music_id = m.id) AS like_count,
-            (SELECT COUNT(*) FROM comment WHERE music_id = m.id) AS comment_count,
-            (SELECT COUNT(*) FROM download_record WHERE music_id = m.id) AS download_count
+        SELECT m.*, u.username
         FROM music m
         LEFT JOIN `user` u ON m.user_id = u.id
         <where>
@@ -125,6 +122,14 @@
         </where>
     </select>
 
+    <!-- 根据用户 ID 查询其上传的所有音乐（用于管理员删除用户时清理文件） -->
+    <select id="findByUserId" resultMap="musicMap">
+        SELECT m.*, u.username
+        FROM music m
+        LEFT JOIN `user` u ON m.user_id = u.id
+        WHERE m.user_id = #{userId}
+    </select>
+
     <!--
       ====================== 单条查询 ======================
     -->
@@ -139,10 +144,7 @@
         歌曲详情页展示时调用
     -->
     <select id="findById" resultMap="musicMap">
-        SELECT m.*, u.username,
-            (SELECT COUNT(*) FROM like_record WHERE music_id = m.id) AS like_count,
-            (SELECT COUNT(*) FROM comment WHERE music_id = m.id) AS comment_count,
-            (SELECT COUNT(*) FROM download_record WHERE music_id = m.id) AS download_count
+        SELECT m.*, u.username
         FROM music m
         LEFT JOIN `user` u ON m.user_id = u.id
         WHERE m.id = #{id}
@@ -182,32 +184,9 @@
         DELETE FROM music WHERE id = #{id}
     </delete>
 
-    <!--
-      ====================== 统计方法（替代冗余字段） ======================
-    -->
-
-    <!--
-      countLikes：统计歌曲的点赞数
-      从 like_record 表中统计指定歌曲的点赞总数
-    -->
-    <select id="countLikes" resultType="int">
-        SELECT COUNT(*) FROM like_record WHERE music_id = #{id}
-    </select>
-
-    <!--
-      countComments：统计歌曲的评论数
-      从 comment 表中统计指定歌曲的评论总数
-    -->
-    <select id="countComments" resultType="int">
-        SELECT COUNT(*) FROM comment WHERE music_id = #{id}
-    </select>
-
-    <!--
-      countDownloads：统计歌曲的下载数
-      从 download_record 表中统计指定歌曲的下载总数
-    -->
-    <select id="countDownloads" resultType="int">
-        SELECT COUNT(*) FROM download_record WHERE music_id = #{id}
+    <!-- 从冗余字段读取点赞数（无需 COUNT 子查询） -->
+    <select id="getLikeCountById" resultType="int">
+        SELECT like_count FROM music WHERE id = #{id}
     </select>
 
     <update id="updateCoverPath">
@@ -244,17 +223,18 @@
         点赞数越高说明歌曲越受欢迎，此排行榜用于"热门推荐"等场景。
     -->
     <select id="findWeeklyLikeTop10" resultMap="musicMap">
-        SELECT m.*, u.username,
-            (SELECT COUNT(*) FROM like_record WHERE music_id = m.id) AS like_count,
-            (SELECT COUNT(*) FROM comment WHERE music_id = m.id) AS comment_count,
-            (SELECT COUNT(*) FROM download_record WHERE music_id = m.id) AS download_count
-        FROM like_record lr                               -- 从点赞记录表开始
-        JOIN music m ON lr.music_id = m.id               -- 关联歌曲表获取歌曲信息
-        JOIN `user` u ON m.user_id = u.id                -- 关联用户表获取上传者用户名
-        WHERE lr.create_time BETWEEN #{start} AND #{end} -- 只统计本周数据
-        GROUP BY lr.music_id                             -- 按歌曲分组
-        ORDER BY COUNT(lr.id) DESC                       -- 按该歌曲获得的点赞数排序
-        LIMIT 10                                          -- 取前 10 名
+        SELECT m.*, u.username, ranked.cnt
+        FROM (
+            SELECT music_id, COUNT(*) AS cnt
+            FROM like_record
+            WHERE create_time BETWEEN #{start} AND #{end}
+            GROUP BY music_id
+            ORDER BY cnt DESC
+            LIMIT 10
+        ) ranked
+        JOIN music m ON ranked.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        ORDER BY ranked.cnt DESC
     </select>
 
     <!--
@@ -268,17 +248,18 @@
         下载量反映歌曲的实际消费热度，与点赞榜互为补充。
     -->
     <select id="findWeeklyDownloadTop10" resultMap="musicMap">
-        SELECT m.*, u.username,
-            (SELECT COUNT(*) FROM like_record WHERE music_id = m.id) AS like_count,
-            (SELECT COUNT(*) FROM comment WHERE music_id = m.id) AS comment_count,
-            (SELECT COUNT(*) FROM download_record WHERE music_id = m.id) AS download_count
-        FROM download_record dr                             -- 从下载记录表开始
-        JOIN music m ON dr.music_id = m.id                 -- 关联歌曲表
-        JOIN `user` u ON m.user_id = u.id                  -- 关联用户表
-        WHERE dr.create_time BETWEEN #{start} AND #{end}   -- 本周数据
-        GROUP BY dr.music_id                                -- 按歌曲分组
-        ORDER BY COUNT(dr.id) DESC                         -- 按下载量排序
-        LIMIT 10                                            -- 取前 10
+        SELECT m.*, u.username, ranked.cnt
+        FROM (
+            SELECT music_id, COUNT(*) AS cnt
+            FROM download_record
+            WHERE create_time BETWEEN #{start} AND #{end}
+            GROUP BY music_id
+            ORDER BY cnt DESC
+            LIMIT 10
+        ) ranked
+        JOIN music m ON ranked.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        ORDER BY ranked.cnt DESC
     </select>
 
     <!--
@@ -293,17 +274,18 @@
         评论多说明歌曲引发了听众的情感共鸣或话题讨论。
     -->
     <select id="findWeeklyCommentTop10" resultMap="musicMap">
-        SELECT m.*, u.username,
-            (SELECT COUNT(*) FROM like_record WHERE music_id = m.id) AS like_count,
-            (SELECT COUNT(*) FROM comment WHERE music_id = m.id) AS comment_count,
-            (SELECT COUNT(*) FROM download_record WHERE music_id = m.id) AS download_count
-        FROM comment c                                      -- 从评论表开始
-        JOIN music m ON c.music_id = m.id                  -- 关联歌曲表
-        JOIN `user` u ON m.user_id = u.id                   -- 关联用户表
-        WHERE c.create_time BETWEEN #{start} AND #{end}    -- 本周数据
-        GROUP BY c.music_id                                 -- 按歌曲分组
-        ORDER BY COUNT(c.id) DESC                          -- 按评论量排序
-        LIMIT 10                                            -- 取前 10
+        SELECT m.*, u.username, ranked.cnt
+        FROM (
+            SELECT music_id, COUNT(*) AS cnt
+            FROM comment
+            WHERE create_time BETWEEN #{start} AND #{end}
+            GROUP BY music_id
+            ORDER BY cnt DESC
+            LIMIT 10
+        ) ranked
+        JOIN music m ON ranked.music_id = m.id
+        JOIN `user` u ON m.user_id = u.id
+        ORDER BY ranked.cnt DESC
     </select>
 
 </mapper>

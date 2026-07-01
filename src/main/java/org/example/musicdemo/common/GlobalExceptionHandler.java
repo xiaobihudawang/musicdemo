@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 全局异常处理器，捕获 Controller 层异常并返回统一 Result 格式。
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<?> handleMissingParam(MissingServletRequestParameterException e) {
         return Result.fail("缺少必需参数: " + e.getParameterName());
+    }
+
+    /** 请求的资源不存在（404） */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<?> handleNotFound(NoResourceFoundException e) {
+        return Result.fail("接口不存在: " + e.getResourcePath());
     }
 
     /** 业务异常（RuntimeException） */

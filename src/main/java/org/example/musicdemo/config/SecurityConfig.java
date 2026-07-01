@@ -48,8 +48,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/music/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/music/*/stream").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/music/*/lyrics").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/music/*/lyrics/regenerate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/external/**").permitAll()
                         // 管理员接口
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 其他接口需登录

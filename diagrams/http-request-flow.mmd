@@ -1,15 +1,14 @@
 flowchart TD
-    Caller["调用 MA.http.get url"] --> Get[get 函数]
-    Get --> Request[request 函数]
-    Request --> GetToken["MA.auth.getToken<br/>读 localStorage/sessionStorage"]
+    Caller["调用 get/post/put/del url"] --> Request[request 函数]
+    Request --> GetToken[getToken<br/>读 localStorage/sessionStorage]
     GetToken --> HasToken{有 Token?}
     HasToken -- 是 --> AddAuth[headers 添加 Authorization Bearer xxx]
     HasToken -- 否 --> Fetch
     AddAuth --> Fetch["fetch url options"]
     Fetch --> Status{response.status}
-    Status -- 401 --> Clear["MA.auth.clearToken<br/>清空登录态"]
+    Status -- 401 --> Clear[clearToken<br/>清空登录态]
     Clear --> Redirect[window.location = /login.html?expired=1]
     Status -- 200 --> ParseJSON["response.json 解析 Result T"]
     ParseJSON --> Return[返回 Promise result]
-    Fetch -- 网络异常 --> Toast["MA.toast.show 网络请求失败"]
+    Fetch -- 网络异常 --> Toast["showToast 网络请求失败"]
     Toast --> Throw[throw error]

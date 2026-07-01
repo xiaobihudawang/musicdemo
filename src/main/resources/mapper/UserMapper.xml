@@ -49,8 +49,6 @@
         <result property="email" column="email"/>
         <result property="role" column="role"/>
         <result property="enabled" column="enabled"/>
-        <result property="totpSecret" column="totp_secret"/>
-        <result property="totpEnabled" column="totp_enabled"/>
         <result property="createTime" column="create_time"/>
     </resultMap>
 
@@ -131,8 +129,8 @@
         应在 Service 层捕获并返回"用户名已存在"的错误提示
     -->
     <insert id="insert" parameterType="org.example.musicdemo.entity.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO `user` (username, password, name, email, role, enabled, totp_secret, totp_enabled)
-        VALUES (#{username}, #{password}, #{name}, #{email}, #{role}, #{enabled}, #{totpSecret}, #{totpEnabled})
+        INSERT INTO `user` (username, password, name, email, role, enabled)
+        VALUES (#{username}, #{password}, #{name}, #{email}, #{role}, #{enabled})
     </insert>
 
     <!--
@@ -150,5 +148,13 @@
     <update id="updateEnabled">
         UPDATE `user` SET enabled = #{enabled} WHERE id = #{id}
     </update>
+
+    <delete id="deleteById">
+        DELETE FROM `user` WHERE id = #{id}
+    </delete>
+
+    <select id="batchDeleteUser" statementType="CALLABLE">
+        CALL sp_batch_delete_user(#{id, mode=IN, jdbcType=INTEGER})
+    </select>
 
 </mapper>

@@ -1,0 +1,44 @@
+@startuml
+title CSS 四层架构
+
+package "CSS 分层" {
+  component "base.css" as BASE <<基础>>
+  note right of BASE
+    :root 变量
+    reset 样式
+    @keyframes 关键帧
+  end note
+
+  component "layout.css" as LAYOUT <<布局>>
+  note right of LAYOUT
+    .navbar
+    .container
+    .page-header
+    .search-bar
+    .pagination
+    .loading-overlay
+  end note
+
+  component "components.css" as COMP <<组件>>
+  note right of COMP
+    .btn / .card
+    .track / .comment
+    .rank-item
+    .toast / .skeleton
+    .file-upload / .table
+  end note
+
+  component "player.css" as PLAYER <<特性>>
+  note right of PLAYER
+    .player-page / .player-main
+    .player-cover / .player-info
+    .lyrics-panel / .lyrics-viewport
+    .lyrics-line / .lyrics-container
+  end note
+}
+
+BASE --> LAYOUT : 依赖
+LAYOUT --> COMP : 依赖
+COMP --> PLAYER : 依赖
+
+@enduml

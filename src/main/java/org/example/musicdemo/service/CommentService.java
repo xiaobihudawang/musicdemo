@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 评论服务，处理音乐评论的增删查逻辑。
- * 不再维护冗余计数字段，评论数通过 comment 表实时统计。
+ * 添加/删除评论时，music.comment_count 由数据库触发器自动维护，无需 Java 手动更新。
  */
 @Service
 public class CommentService {
@@ -50,7 +50,7 @@ public class CommentService {
 
     /** 删除评论 */
     @Transactional
-    public void delete(Integer id, Integer musicId) {
+    public void delete(Integer id) {
         commentMapper.deleteById(id);
     }
 }

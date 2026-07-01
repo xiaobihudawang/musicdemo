@@ -21,6 +21,9 @@ public interface MusicMapper {
     /** 根据 ID 查询单个音乐 */
     Music findById(@Param("id") Integer id);
 
+    /** 根据用户 ID 查询该用户上传的所有音乐 */
+    List<Music> findByUserId(@Param("userId") Integer userId);
+
     /** 插入新音乐记录 */
     int insert(Music music);
 
@@ -33,14 +36,8 @@ public interface MusicMapper {
     /** 更新歌词内容 */
     int updateLyrics(@Param("id") Integer id, @Param("lyrics") String lyrics);
 
-    /** 统计歌曲的点赞数 */
-    int countLikes(@Param("id") Integer id);
-
-    /** 统计歌曲的评论数 */
-    int countComments(@Param("id") Integer id);
-
-    /** 统计歌曲的下载数 */
-    int countDownloads(@Param("id") Integer id);
+    /** 获取点赞数（从冗余字段读取，无需 COUNT 子查询） */
+    int getLikeCountById(@Param("id") Integer id);
 
     /** 本周点赞 TOP10 */
     List<Music> findWeeklyLikeTop10(@Param("start") String start, @Param("end") String end);

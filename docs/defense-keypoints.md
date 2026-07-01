@@ -33,11 +33,11 @@
 
 **技术栈**上，后端用 Spring Boot 3.3.6 + Java 17，持久层用 MyBatis 3.0.4，数据库用 MySQL 8.0，认证用 JWT + Spring Security。前端是没有用任何框架的纯 HTML/CSS/JS，按"基础 + 布局 + 组件 + 详情"四层 CSS 做了模块化。
 
-**核心功能**有 8 块：用户注册登录、音乐上传与在线播放、点赞（Toggle 模式）、评论（带敏感词过滤）、排行榜（点赞/下载/评论三个维度）、管理员后台（用户启停 + 音乐/评论删除）、外部音乐搜索（通过 Node.js 子进程聚合 6 个平台）、B 站音频下载（通过 Python 子进程）、AI 自动生成音乐简介（DeepSeek）。
+**核心功能**有 8 块：用户注册登录、音乐上传与在线播放、点赞（Toggle 模式）、评论（带敏感词过滤）、排行榜（点赞/下载/评论三个维度）、管理员后台（用户启停 + 音乐/评论删除）、外部音乐搜索与封面歌词抓取、B 站音频下载（通过 Python 子进程）、AI 自动生成音乐简介（DeepSeek）。
 
-**数据层**有 5 张表：用户、音乐、评论、点赞记录、下载记录。值得注意的是 `music` 表对 `like_count / comment_count / download_count` 三个字段做了**反范式冗余**，避免每次查询排行榜都要 JOIN；通过 Service 层在点赞/评论/下载时同步更新。
+**数据层**有 5 张表：用户、音乐、评论、点赞记录、下载记录。值得注意的是 `music` 表对 `like_count / comment_count / download_count` 三个字段做了**反范式冗余**，避免每次查询排行榜都要 JOIN；一致性由数据库触发器（`trg_like_insert/delete` 等）自动维护。
 
-**亮点**方面，重点说四个：第一是**敏感词 DFA 检测**，使用 DFA 算法，6 万 + 内置词库 + 自定义音乐场景词，对繁简、全角半角、重复字符都做了归一化；第二是**JWT 无状态认证**，无 Session，可水平扩展；第三是**流式音频响应**，通过 `Files.copy` + `InputStreamResource` 实现边下边播；第四是**外部进程隔离**，Node.js / Python 脚本以子进程方式调用，主进程崩了不会影响整个应用。
+**亮点**方面，重点说四个：第一是**敏感词 DFA 检测**，使用 DFA 算法，6 万 + 内置词库 + 自定义音乐场景词，对繁简、全角半角、重复字符都做了归一化；第二是**JWT 无状态认证**，无 Session，可水平扩展；第三是**流式音频响应**，通过 `InputStreamResource` 实现边下边播；第四是**外部进程隔离**，Python 脚本以子进程方式调用，主进程崩了不会影响整个应用。
 
 下面我从需求、架构、数据库、Web 后端、前端、关键技术依次展开。
 
@@ -88,8 +88,8 @@
 | **BCrypt** | MD5 / SHA-1 | 自带盐、抗彩虹表、可调 cost |
 | **纯 HTML/CSS/JS 前端** | Vue / React | 课程重点是"前后端交互原理"，框架会掩盖 fetch / DOM / 事件机制的细节；按教学要求 |
 | **敏感词检测库（sensitive-word 0.29.3）** | 自己写正则 / 朴素匹配 | DFA 树结构，O(n) 时间复杂度；6W+ 内置词；自动归一化繁简/全角半角/重复字符 |
-| **Node.js 子进程集成 listen1** | 直接 HTTP 调第三方 | 各平台 API 签名差异大，listen1api 已封装；通过 `ProcessBuilder` 隔离故障域 |
 | **Python 子进程下载 B 站** | Java 直接实现 | bilibili API 经常变，Python 生态 yt-dlp / bilix 跟得最快 |
+| **Python 子进程搜索/封面** | Java 直接实现 | 网易云 API 签名复杂，Python 实现更灵活；通过 `ProcessBuilder` 隔离故障域 |
 | **DeepSeek API** | 本地 LLaMA | 接入成本低；可换其他兼容 OpenAI 协议的模型 |
 
 ---
@@ -129,16 +129,16 @@
                               │   (5 张表)       │
                               └──────────────────┘
 
-       外部进程：                                   外部 API：
-       ┌──────────────────┐                            ┌────────────┐
-       │ Node.js:         │                            │ DeepSeek   │
-       │ listen1-worker   │                            │ AI 接口    │
-       │ (聚合 6 平台搜索)│                            └────────────┘
-       └──────────────────┘
+       外部进程：
        ┌──────────────────┐
        │ Python:          │
        │ bilibili_demo.py │
        │ (B 站音频下载)   │
+       └──────────────────┘
+       ┌──────────────────┐
+       │ Python:          │
+       │ netease_search.py│
+       │ (搜索/封面/歌词) │
        └──────────────────┘
 ```
 
@@ -159,10 +159,10 @@ org.example.musicdemo
 │   ├── AuthController          /api/auth/**
 │   ├── MusicController         /api/music/**
 │   ├── CommentController       /api/comment/**
-│   ├── LikeController          /api/like/**
+│   ├── LikeController          /api/music/**/{id}/like
 │   ├── RankingController       /api/ranking/**
 │   ├── AdminController         /api/admin/**
-│   ├── Listen1Controller       /api/external/**
+
 │   ├── BilibiliController      /api/bilibili/**
 │   └── AiController            /api/ai/**
 ├── entity/             5 个实体 = 5 张表
@@ -170,9 +170,11 @@ org.example.musicdemo
 ├── service/            9 个服务
 │   ├── UserService / MusicService / CommentService
 │   ├── LikeService / RankingService
-│   ├── Listen1Service / BilibiliService / AiService
-│   ├── CoverService        封面自动抓取
-│   └── SensitiveWordService 敏感词检测
+│   ├── CoverService           封面自动抓取
+│   ├── LyricsService          歌词解析
+│   ├── SensitiveWordService   敏感词 DFA 检测
+│   ├── BilibiliService        Python 子进程
+│   └── AiService              DeepSeek API 调用
 └── MusicdemoApplication    启动类
 ```
 
@@ -243,8 +245,7 @@ CREATE TABLE `user` (
   `email` VARCHAR(255),
   `role` VARCHAR(50) DEFAULT 'user',         -- 'user' / 'admin'
   `enabled` TINYINT(1) DEFAULT 1,            -- 启用位
-  `totp_secret` VARCHAR(255),                -- 两步验证密钥
-  `totp_enabled` TINYINT(1) DEFAULT 0,
+
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -322,15 +323,22 @@ SELECT * FROM music ORDER BY like_count DESC LIMIT 10;
 
 后者走主键索引 + 一个排序，时间从 O(N log N) 退化到 O(K log K)（K=10）。
 
-**一致性如何保证？** 在 `LikeService.add()` / `delete()` 中事务性更新：
+**一致性如何保证？** 点赞采用 **try-INSERT / catch-DuplicateKey → DELETE** 的 Toggle 模式，`like_count` 由数据库触发器自动维护：
 
 ```java
 @Transactional
-public void like(Integer userId, Integer musicId) {
-    likeRecordMapper.insert(userId, musicId);          // 插记录
-    musicMapper.incrementLikeCount(musicId);           // 计数 +1
+public Map<String, Object> toggle(Integer userId, Integer musicId) {
+    Map<String, Object> result = new HashMap<>();
+    try {
+        likeRecordMapper.insert(record);        // 未赞 → 插入，触发 trg_like_insert +1
+        result.put("liked", true);
+    } catch (DuplicateKeyException e) {
+        likeRecordMapper.delete(userId, musicId); // 已赞 → 删除，触发 trg_like_delete -1
+        result.put("liked", false);
+    }
+    result.put("likeCount", musicMapper.getLikeCountById(musicId));
+    return result;
 }
-// 若 insert 抛唯一约束异常，事务回滚，计数不会 +1
 ```
 
 ### 5.4 索引设计
@@ -398,10 +406,10 @@ HTTP 请求
 | GET | `/api/music/{id}/stream` | 流式播放 | 公开 |
 | GET | `/api/music/{id}/download` | 下载 | 公开 |
 | DELETE | `/api/music/{id}` | 删除（本人/管理员） | 登录 |
-| POST | `/api/comment` | 评论 | 登录 |
-| GET | `/api/comment/list/{musicId}` | 评论列表 | 公开 |
-| POST | `/api/like/{musicId}` | 点赞 | 登录 |
-| DELETE | `/api/like/{musicId}` | 取消点赞 | 登录 |
+| GET | `/api/music/{id}/comments` | 评论列表 | 公开 |
+| POST | `/api/music/{id}/comments` | 发表评论 | 登录 |
+| POST | `/api/music/{id}/like` | 点赞/取消点赞（Toggle） | 登录 |
+| GET | `/api/music/{id}/like/status` | 查询点赞状态 | 登录 |
 | GET | `/api/ranking/likes` | 点赞榜 | 公开 |
 | GET | `/api/external/search` | 多平台搜索 | 公开 |
 | POST | `/api/bilibili/download` | B 站下载 | 登录 |
@@ -461,7 +469,6 @@ http
       .requestMatchers("/api/auth/**").permitAll()
       .requestMatchers(GET, "/api/music/**").permitAll()
       .requestMatchers(GET, "/api/ranking/**").permitAll()
-      .requestMatchers(GET, "/api/external/**").permitAll()
       .requestMatchers("/api/music/file/**", "/api/music/cover/**").permitAll()
       .requestMatchers("/api/admin/**").hasRole("ADMIN")
       .anyRequest().authenticated()
@@ -643,10 +650,10 @@ multipart/form-data
 
 ### 8.4 外部进程集成
 
-`Listen1Service` 用 `ProcessBuilder` 调 Python：
+`BilibiliService` 和 `AiService` 用 `ProcessBuilder` 调 Python：
 
 ```java
-Process p = new ProcessBuilder("python", "netease_search.py", "search", keyword)
+Process p = new ProcessBuilder("python", "script.py", args...)
     .redirectErrorStream(true)
     .start();
 
@@ -661,7 +668,7 @@ int code = p.waitFor();
 **关键设计**：
 
 - **每请求一进程**：避免状态污染；进程退出即回收
-- **约定协议**：Node 端输出 `RESULT: {...JSON...}` 表示成功
+- **约定协议**：Python 端输出 `RESULT: {...JSON...}` 表示成功
 - **超时控制**：30 秒 `waitFor` 后强制 `destroyForcibly`
 - **故障隔离**：子进程崩了不影响 Spring Boot 主进程
 
@@ -696,7 +703,7 @@ HttpResponse<String> resp = client.send(req, BodyHandlers.ofString());
 ### 9.1 单元测试
 
 - `MusicdemoApplicationTests.contextLoads()` — Spring 上下文能启动即通过
-- `SensitiveWordServiceTest` — 8 个用例：
+- `SensitiveWordServiceTest` — 7 个用例：
   - 中文脏话命中
   - 英文脏话命中
   - 暴力词命中
@@ -704,11 +711,10 @@ HttpResponse<String> resp = client.send(req, BodyHandlers.ofString());
   - 正常文本通过
   - 大小写不敏感
   - 重复字符归一化（"操操操"）
-  - `findAll` 返回所有命中词及位置
 
 ```bash
 mvnw.cmd test
-# Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+# Tests run: 39, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ### 9.2 接口测试（Postman / 浏览器）
@@ -721,8 +727,8 @@ mvnw.cmd test
 | 密码错 | 同上 | code=400 |
 | 上传音乐（未登录） | POST /api/music/upload | 401 |
 | 上传音乐（登录） | 同上 | code=200, 列表里能看到 |
-| 点赞 | POST /api/like/1 | music.like_count +1 |
-| 重复点赞 | 同上 | 400（UK 约束） |
+| 点赞（未赞过） | POST /api/music/1/like | liked=true, like_count +1 |
+| 重复点赞（已赞） | 同上 | liked=false, like_count -1（Toggle 取消） |
 | 评论含敏感词 | POST /api/comment | 400, msg=评论包含不当内容 |
 | 排行榜 | GET /api/ranking/likes | 按 like_count DESC 返回 |
 | 管理员删音乐 | DELETE /api/admin/music/1 | 200 |
@@ -767,10 +773,10 @@ musicdemo/
 ├── README.md
 ├── AGENTS.md                   ← 开发规范（人看 + AI 看）
 ├── docs/                       ← 文档（答辩要点 / 前端教程）
-├── diagrams/                   ← Mermaid 架构图
+├── diagrams/                   ← PlantUML + Mermaid 架构图
 ├── scripts/                   ← Python 外部脚本
 └── src/main/
-    ├── java/org/example/musicdemo/   ← 9 个包
+    ├── java/org/example/musicdemo/   ← 6 个包（common/config/controller/entity/mapper/service）
     └── resources/
         ├── application.yml
         ├── mapper/                   ← MyBatis XML
@@ -802,10 +808,10 @@ A：MyBatis 是"SQL 优先"，可控可优化；JPA 是"对象优先"，面向�
 ### Q2. 数据库相关
 
 **Q：为什么 `music` 表要冗余 `like_count` 等字段？**
-A：反范式换查询性能。排行榜是高频读路径，省一次 JOIN+COUNT。代价是要在 Service 层维护一致性，用 `@Transactional` 保证。
+A：反范式换查询性能。排行榜是高频读路径，省一次 JOIN+COUNT。一致性由数据库触发器自动维护，不需应用层干预。
 
-**Q：`like_record` 为什么不直接给 `music.like_count` 加个触发器自动更新？**
-A：触发器是数据库层逻辑，不易追踪、难调试、跨数据库不通用。Service 层 + 事务更可控，可读性也更好。
+**Q：`music.like_count` 是怎么更新的？**
+A：由数据库触发器自动维护——插入 `like_record` 时 `trg_like_insert` 触发 +1，删除时 `trg_like_delete` 触发 -1。相比应用层手动更新，触发器保证了计数与记录表的绝对一致，不存在漏更新问题。
 
 **Q：JOIN 太多会怎么样？**
 A：笛卡尔积爆炸 + 临时表 + 排序在磁盘。本项目最多 2 张表 JOIN（评论带用户名），性能足够。
@@ -852,8 +858,8 @@ A：服务端 `InputStreamResource` + `ResponseEntity` 返回 `application/octet
 **Q：事务边界放在哪？**
 A：Service 层（`@Transactional`）。Controller 多次调 Service 跨多个事务，粒度太粗；Mapper 单 SQL 自动提交，不合适。
 
-**Q：为什么用 ProcessBuilder 调 Node？**
-A：故障隔离、版本独立、可替换实现。HTTP 调用会更紧耦合，封装 Node 库也不现实。
+**Q：为什么用 ProcessBuilder 调 Python？**
+A：故障隔离、语言独立、可替换实现。HTTP 调第三方 API 更紧耦合且不可控；子进程方式与 Java 解耦，便于独立部署和调试。
 
 **Q：敏感词库怎么维护？**
 A：使用 DFA 库 `sensitive-word` 0.29.3，内置 6 万+ 词 + 自定义音乐场景词；通过 `@PostConstruct` 初始化，单例。生产可改成读数据库动态加载。
@@ -868,17 +874,17 @@ A：使用 DFA 库 `sensitive-word` 0.29.3，内置 6 万+ 词 + 自定义音乐
 
 **答**：
 
-放在同一个 `@Transactional` 方法里：
+点赞的冗余计数不由应用层维护，而是通过 MySQL **触发器**自动同步：
 
-```java
-@Transactional
-public void like(Integer userId, Integer musicId) {
-    likeRecordMapper.insert(userId, musicId);     // 失败 → 整个事务回滚
-    musicMapper.incrementLikeCount(musicId);
-}
+```sql
+CREATE TRIGGER trg_like_insert AFTER INSERT ON like_record FOR EACH ROW
+    UPDATE music SET like_count = like_count + 1 WHERE id = NEW.music_id;
+
+CREATE TRIGGER trg_like_delete AFTER DELETE ON like_record FOR EACH ROW
+    UPDATE music SET like_count = like_count - 1 WHERE id = OLD.music_id;
 ```
 
-如果数据库连接断了，两个都失败；唯一约束冲突抛异常也回滚；不会出现"记录插了但计数没 +1"。
+触发器与 INSERT/DELETE 在同一事务内执行，不可能出现"记录插了但计数没 +1"的情况。相比应用层手动 `incrementLikeCount()`，触发器方案更简洁，且保证了 100% 一致性。
 
 ### 12.2 "JWT 泄露怎么办？"
 
@@ -889,7 +895,7 @@ public void like(Integer userId, Integer musicId) {
 - 服务端记录已签发的 `jti`，登出时加入黑名单（不破坏"无状态"特性，因为黑名单规模可控）
 - 监听异常 IP 调用模式
 
-### 12.3 "Node 进程卡死怎么办？"
+### 12.3 "Python 子进程卡死怎么办？"
 
 **答**：
 
@@ -933,16 +939,17 @@ public void like(Integer userId, Integer musicId) {
 
 ## 十三、配套图表
 
-`diagrams/` 目录下有 Mermaid 源文件，建议准备：
+`diagrams/` 目录下有 PlantUML 和 Mermaid 双格式源文件：
 
-- `architecture.mmd` — 整体架构（4.1）
-- `er-diagram.mmd` — 5 张表 ER 图（5.1）
-- `jwt-flow.mmd` — JWT 鉴权时序（6.3）
-- `sensitive-word-dfa.mmd` — DFA 状态机示意（8.1）
-- `stream-flow.mmd` — 流式播放时序（8.2）
-- `page-sequence.mmd` — 详情页加载流程
+| 图名 | 文件 |
+|------|------|
+| ER 图 | `er-diagram.puml` / `er-diagram.mmd` |
+| HTTP 请求流程 | `http-request-flow.puml` / `http-request-flow.mmd` |
+| 前端加载顺序 | `frontend-loading-order.puml` / `frontend-loading-order.mmd` |
+| 详情页加载流程 | `detail-page-flow.puml` / `detail-page-flow.mmd` |
+| CSS 分层架构 | `css-layer.puml` / `css-layer.mmd` |
 
-可用 VS Code "Mermaid Preview" 插件或 https://mermaid.live 在线查看。
+可用 VS Code "PlantUML" 插件预览 `.puml`，或 "Mermaid Preview" 插件预览 `.mmd`。
 
 ---
 

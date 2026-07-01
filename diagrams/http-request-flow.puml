@@ -1,0 +1,26 @@
+@startuml
+title HTTP 请求流程（api.js）
+
+start
+:调用 get/post/put/del;
+:request 函数;
+:getToken() 读 localStorage/sessionStorage;
+if (有 Token?) then (是)
+  :headers 添加 Authorization: Bearer xxx;
+endif
+:fetch(url, options);
+if (response.status?) then (401)
+  :clearToken() 清空登录态;
+  :window.location = /login.html?expired=1;
+  stop
+elseif (200) then
+  :response.json() 解析 Result<T>;
+  :返回 Promise<result>;
+  stop
+else
+  :showToast("网络请求失败");
+  :throw error;
+  stop
+endif
+
+@enduml

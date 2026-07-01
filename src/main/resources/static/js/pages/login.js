@@ -43,6 +43,12 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
+// 检查是否因登录过期被重定向
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('expired') === '1') {
+    showToast('登录已过期，请重新登录', 'error');
+}
+
 // 已登录则直接跳首页
 if (isLogined()) {
     window.location.replace('/');

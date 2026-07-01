@@ -1,6 +1,6 @@
 flowchart TD
     Start([打开 detail.html?id=24]) --> LoadDetail[loadDetail]
-    LoadDetail --> ReqDetail["MA.http.get /api/music/24"]
+    LoadDetail --> ReqDetail["get /api/music/24"]
     ReqDetail --> RespDetail{code === 200?}
     RespDetail -- 否 --> ShowErr[显示 '音乐不存在']
     RespDetail -- 是 --> HideSkel[隐藏骨架屏]
@@ -10,7 +10,7 @@ flowchart TD
     CheckLogin -- 是 --> CheckLike[checkLikeStatus]
     CheckLogin -- 否 --> LoadLyrics
     CheckLike --> LoadLyrics
-    LoadLyrics[loadLyrics] --> ReqLyrics["MA.http.get /api/music/24/lyrics"]
+    LoadLyrics[loadLyrics] --> ReqLyrics["get /api/music/24/lyrics"]
     ReqLyrics --> HasLyrics{有歌词?}
     HasLyrics -- 否 --> Empty[显示 '暂无歌词']
     HasLyrics -- 是 --> ParseLRC[parseLRC 解析时间戳]

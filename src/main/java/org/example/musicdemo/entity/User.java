@@ -31,13 +31,6 @@ public class User {
     /** 是否启用，禁用后无法登录 */
     private Boolean enabled;
 
-    /** TOTP 密钥（Base32 编码），用于生成/验证动态验证码 */
-    @JsonIgnore
-    private String totpSecret;
-
-    /** 是否已启用 TOTP 两步验证 */
-    private Boolean totpEnabled;
-
     /** 注册时间，数据库自动填充 */
     private LocalDateTime createTime;
 }

@@ -40,17 +40,13 @@ function renderList(list) {
     }
 
     container.innerHTML = list.map((item, index) => {
-        const hasCover = !!item.coverPath;
-        const coverUrl = `/api/music/cover/${item.coverPath}`;
+        const coverUrl = item.coverPath ? `/api/music/cover/${item.coverPath}` : '/video/logo.png';
         const realIndex = (currentPage - 1) * PAGE_SIZE + index + 1;
         return `
             <div class="track" onclick="location.href='/detail.html?id=${item.id}'">
                 <span class="track-index">${String(realIndex).padStart(2, '0')}</span>
                 <div class="track-cover">
-                    ${hasCover
-                        ? `<img src="${coverUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
-                        : `<div class="placeholder">♪</div>`
-                    }
+                    <img src="${coverUrl}" alt="${escapeHtml(item.title)}" loading="lazy">
                 </div>
                 <div class="track-meta">
                     <div class="track-title">${escapeHtml(item.title)}</div>

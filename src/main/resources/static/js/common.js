@@ -7,7 +7,7 @@
  *           getUserRole / isLogined / parseJwt / isTokenExpired
  *   - 提示：showToast
  *   - 格式化：formatDate / formatSize / escapeHtml
- *   - 组件：renderNavbar / fadeOutLoading / logout
+ *   - 组件：renderNavbar / logout
  *
  * 全局函数（不依赖任何命名空间）。
  * 必须先于各页面脚本加载。
@@ -164,14 +164,4 @@ document.addEventListener('click', function (e) {
     if (e.target && e.target.id === 'navLogoutBtn') logout();
 });
 
-// ============================================================
-// 全屏加载遮罩
-// ============================================================
-// 记录 common.js 加载时刻，作为"页面开始"用于 fadeOutLoading 的最短显示时间计算
-const PAGE_LOAD_TS = performance.now();
 
-function fadeOutLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (!overlay) return;
-    overlay.style.display = 'none';
-}

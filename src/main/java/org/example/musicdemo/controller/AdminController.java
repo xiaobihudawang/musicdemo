@@ -10,6 +10,8 @@ import org.example.musicdemo.service.CommentService;
 import org.example.musicdemo.service.MusicService;
 import org.example.musicdemo.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +29,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private final UserService userService;
     private final MusicService musicService;
@@ -58,6 +62,34 @@ public class AdminController {
         return Result.success();
     }
 
+    /** 级联删除用户及其所有关联数据（DB 由存储过程处理，文件由 Java 清理） */
+    @DeleteMapping("/users/{id}")
+    public Result<?> deleteUser(@PathVariable Integer id) {
+        User user = userService.findById(id);
+        if (user == null) {
+            return Result.fail(ResultCode.NOT_FOUND);
+        }
+
+        List<Music> userMusic = musicMapper.findByUserId(id);
+        for (Music music : userMusic) {
+            if (music.getFilePath() != null) {
+                File file = new File(filePath + music.getFilePath());
+                if (file.exists() && !file.delete()) {
+                    log.warn("无法删除音频文件: {}", file.getAbsolutePath());
+                }
+            }
+            if (music.getCoverPath() != null) {
+                File cover = new File(filePath + music.getCoverPath());
+                if (cover.exists() && !cover.delete()) {
+                    log.warn("无法删除封面文件: {}", cover.getAbsolutePath());
+                }
+            }
+        }
+
+        userService.deleteById(id);
+        return Result.success();
+    }
+
     /** 管理员删除音乐（不需要是创建者） */
     @DeleteMapping("/music/{id}")
     public Result<?> deleteMusic(@PathVariable Integer id) {
@@ -76,7 +108,7 @@ public class AdminController {
         if (comment == null) {
             return Result.fail(ResultCode.NOT_FOUND);
         }
-        commentService.delete(id, comment.getMusicId());
+        commentService.delete(id);
         return Result.success();
     }
 

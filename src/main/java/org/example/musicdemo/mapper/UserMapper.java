@@ -26,4 +26,10 @@ public interface UserMapper {
 
     /** 更新用户的启用/禁用状态（管理员操作） */
     int updateEnabled(@Param("id") Integer id, @Param("enabled") Boolean enabled);
+
+    /** 根据 ID 删除用户（管理员操作） */
+    int deleteById(@Param("id") Integer id);
+
+    /** 级联删除用户及其所有关联数据（调用存储过程） */
+    void batchDeleteUser(@Param("id") Integer id);
 }

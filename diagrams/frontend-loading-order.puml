@@ -1,0 +1,25 @@
+@startuml
+title 前端 JS/CSS 加载顺序
+
+start
+:HTML 页面加载;
+fork
+  :base.css (变量/reset);
+  :layout.css (navbar/container);
+  :components.css (btn/card/form/track);
+  :player.css (详情页专用);
+fork again
+  :common.js (Token/Toast/Navbar/Loading);
+  :api.js (get/post/put/del/postForm);
+  :pages/*.js (当前页面业务逻辑);
+  :app.js (DOMContentLoaded 启动);
+  note right
+    app.js 最后加载:
+    1. 插入导航栏
+    2. 淡出 loading 遮罩
+  end note
+end fork
+:页面渲染完成;
+stop
+
+@enduml

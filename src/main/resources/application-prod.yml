@@ -1,0 +1,14 @@
+# ============================================================
+# 生产环境配置覆盖
+# 启动方式：java -jar app.jar --spring.profiles.active=prod
+# ============================================================
+
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+
+music:
+  file-path: /data/music/
+
+jwt:
+  secret: ${JWT_SECRET}
